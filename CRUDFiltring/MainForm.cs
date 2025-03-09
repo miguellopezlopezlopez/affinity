@@ -6,6 +6,7 @@ using System.IO;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace FiltringApp
 {
@@ -13,12 +14,15 @@ namespace FiltringApp
     {
         private MySqlConnection conexion;
         private string cadenaConexion;
+        private string usuarioAutenticado;
+        private string rutaFoto = string.Empty;
 
-        public MainForm()
+        public MainForm(string usuario)
         {
             InitializeComponent();
+            usuarioAutenticado = usuario;
             CargarConfiguracion();
-            CargarDatosUsuarios();
+            CargarDatosUsuario();
         }
 
         private void CargarConfiguracion()
@@ -51,16 +55,38 @@ namespace FiltringApp
             }
         }
 
-        private void CargarDatosUsuarios()
+        private void CargarDatosUsuario()
         {
             try
             {
-                conexion.Open();
-                string consulta = "SELECT ID, User, Nombre, Apellido, Genero, Ubicacion FROM Usuario";
-                MySqlDataAdapter adaptador = new MySqlDataAdapter(consulta, conexion);
+                if (conexion.State == ConnectionState.Closed)
+                {
+                    conexion.Open();
+                }
+
+                string consulta = "SELECT ID, User, Nombre, Apellido, Genero, Ubicacion, Foto FROM Usuario WHERE User = @usuario";
+                MySqlCommand cmd = new MySqlCommand(consulta, conexion);
+                cmd.Parameters.AddWithValue("@usuario", usuarioAutenticado);
+                MySqlDataAdapter adaptador = new MySqlDataAdapter(cmd);
                 DataTable dt = new DataTable();
                 adaptador.Fill(dt);
-                dataGridViewUsuarios.DataSource = dt;
+                dataGridViewUsuario.DataSource = dt;
+
+                if (dt.Rows.Count > 0)
+                {
+                    DataRow row = dt.Rows[0];
+                    txtUser.Text = row["User"].ToString();
+                    txtNombre.Text = row["Nombre"].ToString();
+                    txtApellido.Text = row["Apellido"].ToString();
+                    cmbGenero.SelectedItem = row["Genero"].ToString();
+                    txtUbicacion.Text = row["Ubicacion"].ToString();
+
+                    rutaFoto = row["Foto"].ToString();
+                    if (File.Exists(rutaFoto))
+                    {
+                        pictureBoxFoto.Image = Image.FromFile(rutaFoto);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -68,41 +94,116 @@ namespace FiltringApp
             }
             finally
             {
-                conexion.Close();
-            }
-        }
-
-        private void btnAgregarUsuario_Click(object sender, EventArgs e)
-        {
-            RegistroForm registroForm = new RegistroForm();
-            registroForm.ShowDialog();
-            CargarDatosUsuarios();
-        }
-
-        private void btnEliminarUsuario_Click(object sender, EventArgs e)
-        {
-            if (dataGridViewUsuarios.SelectedRows.Count > 0)
-            {
-                int id = Convert.ToInt32(dataGridViewUsuarios.SelectedRows[0].Cells["ID"].Value);
-                try
-                {
-                    conexion.Open();
-                    string consulta = "DELETE FROM Usuario WHERE ID=@id";
-                    MySqlCommand cmd = new MySqlCommand(consulta, conexion);
-                    cmd.Parameters.AddWithValue("@id", id);
-                    cmd.ExecuteNonQuery();
-                    MessageBox.Show("Usuario eliminado correctamente.");
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error al eliminar usuario: " + ex.Message);
-                }
-                finally
+                if (conexion.State == ConnectionState.Open)
                 {
                     conexion.Close();
-                    CargarDatosUsuarios();
                 }
             }
+        }
+
+        private void btnActualizar_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(txtPassword.Text))
+                {
+                    MessageBox.Show("La contraseña no puede estar vacía.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (conexion.State == ConnectionState.Closed)
+                {
+                    conexion.Open();
+                }
+
+                string consulta = "UPDATE Usuario SET Password=@password, Nombre=@nombre, Apellido=@apellido, Genero=@genero, Ubicacion=@ubicacion, Foto=@foto WHERE User=@usuario";
+                MySqlCommand cmd = new MySqlCommand(consulta, conexion);
+                cmd.Parameters.AddWithValue("@usuario", usuarioAutenticado);
+                cmd.Parameters.AddWithValue("@password", txtPassword.Text);
+                cmd.Parameters.AddWithValue("@nombre", txtNombre.Text);
+                cmd.Parameters.AddWithValue("@apellido", txtApellido.Text);
+                cmd.Parameters.AddWithValue("@genero", cmbGenero.SelectedItem.ToString());
+                cmd.Parameters.AddWithValue("@ubicacion", txtUbicacion.Text);
+                cmd.Parameters.AddWithValue("@foto", rutaFoto);
+
+                cmd.ExecuteNonQuery();
+                MessageBox.Show("Datos actualizados correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                CargarDatosUsuario();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al actualizar datos: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                if (conexion.State == ConnectionState.Open)
+                {
+                    conexion.Close();
+                }
+            }
+        }
+
+        private void abrirMatchesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            int idUsuario = ObtenerIdUsuario(usuarioAutenticado);
+            if (idUsuario != -1)
+            {
+                MatchesForm matchesForm = new MatchesForm(usuarioAutenticado, idUsuario);
+                matchesForm.ShowDialog();
+            }
+            else
+            {
+                MessageBox.Show("Error al obtener el ID del usuario.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private int ObtenerIdUsuario(string usuario)
+        {
+            int idUsuario = -1;
+            try
+            {
+                if (conexion.State == ConnectionState.Closed)
+                {
+                    conexion.Open();
+                }
+
+                string consulta = "SELECT ID FROM Usuario WHERE User = @usuario";
+                MySqlCommand cmd = new MySqlCommand(consulta, conexion);
+                cmd.Parameters.AddWithValue("@usuario", usuario);
+                object resultado = cmd.ExecuteScalar();
+
+                if (resultado != null)
+                {
+                    idUsuario = Convert.ToInt32(resultado);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al obtener el ID del usuario: " + ex.Message);
+            }
+            finally
+            {
+                if (conexion.State == ConnectionState.Open)
+                {
+                    conexion.Close();
+                }
+            }
+            return idUsuario;
+        }
+
+        private void cerrarSesiónToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Hide();  // Oculta el formulario actual antes de abrir el LogIn
+            LogIn loginForm = new LogIn();
+            loginForm.ShowDialog();
+            this.Close(); //
+        }
+
+        private void abrirMensajesRecibidosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ReceivedMessagesForm receivedMessagesForm = new ReceivedMessagesForm(usuarioAutenticado, ObtenerIdUsuario(usuarioAutenticado));
+            receivedMessagesForm.ShowDialog();
         }
     }
 }

@@ -6,6 +6,8 @@ using System.IO;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 
 namespace FiltringApp
 {
@@ -53,13 +55,34 @@ namespace FiltringApp
 
         private void btnCargarFoto_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openFileDialog1 = new OpenFileDialog();
-            openFileDialog1.Filter = "Archivos de imagen|*.jpg;*.jpeg;*.png;*.bmp";
+            OpenFileDialog openFileDialog1 = new OpenFileDialog
+            {
+                Filter = "Archivos de imagen|*.jpg;*.jpeg;*.png;*.bmp"
+            };
+
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 rutaFoto = openFileDialog1.FileName;
-                pictureBoxFoto.Image = Image.FromFile(rutaFoto);
+
+                // Cargar la imagen y redimensionarla
+                Image imgOriginal = Image.FromFile(rutaFoto);
+                Image imgRedimensionada = RedimensionarImagen(imgOriginal, pictureBoxFoto.Width, pictureBoxFoto.Height);
+
+                // Asignar la imagen redimensionada al PictureBox
+                pictureBoxFoto.Image = imgRedimensionada;
+                pictureBoxFoto.SizeMode = PictureBoxSizeMode.StretchImage;
             }
+        }
+
+        private Image RedimensionarImagen(Image img, int ancho, int alto)
+        {
+            Bitmap nuevaImagen = new Bitmap(ancho, alto);
+            using (Graphics g = Graphics.FromImage(nuevaImagen))
+            {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.DrawImage(img, 0, 0, ancho, alto);
+            }
+            return nuevaImagen;
         }
 
         private void btnRegistrar_Click(object sender, EventArgs e)

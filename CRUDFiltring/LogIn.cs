@@ -13,11 +13,13 @@ namespace FiltringApp
     {
         private MySqlConnection conexion;
         private string cadenaConexion;
+        private Dictionary<string, string> config;
 
         public LogIn()
         {
             InitializeComponent();
             CargarConfiguracion();
+            EjecutarScriptSQL(); // Ejecutar el script SQL al iniciar la aplicación
         }
 
         private void CargarConfiguracion()
@@ -30,11 +32,11 @@ namespace FiltringApp
                     .Build();
 
                 string yamlContent = File.ReadAllText(configPath);
-                Dictionary<string, string> config = deserializer.Deserialize<Dictionary<string, string>>(yamlContent);
+                config = deserializer.Deserialize<Dictionary<string, string>>(yamlContent);
 
                 if (config.ContainsKey("host") && config.ContainsKey("port") && config.ContainsKey("database") && config.ContainsKey("user") && config.ContainsKey("password"))
                 {
-                    cadenaConexion = $"server={config["host"]};port={config["port"]};user={config["user"]};password={config["password"]};database={config["database"]}";
+                    cadenaConexion = $"server={config["host"]};port={config["port"]};database={config["database"]};user={config["user"]};password={config["password"]};";
                     conexion = new MySqlConnection(cadenaConexion);
                 }
                 else
@@ -50,6 +52,36 @@ namespace FiltringApp
             }
         }
 
+        private void EjecutarScriptSQL()
+        {
+            string scriptPath = "filtringDB.sql"; // Asegúrate de que el archivo está en el mismo directorio que el ejecutable
+
+            if (File.Exists(scriptPath))
+            {
+                try
+                {
+                    string script = File.ReadAllText(scriptPath);
+
+                    // Conectarse sin especificar la base de datos para asegurarnos de que se pueda crear
+                    string cadenaConexionInicial = $"server={config["host"]};port={config["port"]};user={config["user"]};password={config["password"]};";
+                    using (MySqlConnection conn = new MySqlConnection(cadenaConexionInicial))
+                    {
+                        conn.Open();
+                        MySqlCommand cmd = new MySqlCommand(script, conn);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error al ejecutar el script SQL: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else
+            {
+                MessageBox.Show("El archivo filtringDB.sql no se encontró. Asegúrate de que el script esté en la carpeta del ejecutable.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void btnLogIn_Click(object sender, EventArgs e)
         {
             string usuario = txtUser.Text.Trim();
@@ -61,16 +93,14 @@ namespace FiltringApp
                 return;
             }
 
-            if (usuario.Length < 3 || contraseña.Length < 6)
-            {
-                MessageBox.Show("El usuario debe tener al menos 3 caracteres y la contraseña al menos 6 caracteres.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
             try
             {
-                conexion.Open();
-                string consulta = "SELECT * FROM Usuario WHERE User = @usuario AND Password = @contraseña";
+                if (conexion.State == ConnectionState.Closed)
+                {
+                    conexion.Open();
+                }
+
+                string consulta = "SELECT ID, User FROM Usuario WHERE User = @usuario AND Password = @contraseña";
                 MySqlCommand cmd = new MySqlCommand(consulta, conexion);
                 cmd.Parameters.AddWithValue("@usuario", usuario);
                 cmd.Parameters.AddWithValue("@contraseña", contraseña);
@@ -78,11 +108,24 @@ namespace FiltringApp
 
                 if (reader.Read())
                 {
-                    MessageBox.Show("Inicio de sesión exitoso");
-                    this.Hide();
-                    MainForm mainForm = new MainForm();
-                    mainForm.ShowDialog();
-                    this.Close();
+                    int idUsuario = Convert.ToInt32(reader["ID"]);
+                    string usuarioAutenticado = reader["User"].ToString();
+
+                    MessageBox.Show("Inicio de sesión exitoso", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    this.Hide(); // Oculta LogIn, pero no lo cierra
+
+                    Form formularioDestino;
+                    if (usuario.ToLower() == "admin")
+                    {
+                        formularioDestino = new AdminForm(usuarioAutenticado);
+                    }
+                    else
+                    {
+                        formularioDestino = new MainForm(usuarioAutenticado);
+                    }
+
+                    formularioDestino.ShowDialog();
+                    this.Show(); // Muestra nuevamente LogIn cuando el otro formulario se cierre
                 }
                 else
                 {
@@ -96,7 +139,10 @@ namespace FiltringApp
             }
             finally
             {
-                conexion.Close();
+                if (conexion.State == ConnectionState.Open)
+                {
+                    conexion.Close();
+                }
             }
         }
 
