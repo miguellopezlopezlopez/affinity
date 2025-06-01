@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas de Usuario - Affinity</title>
+    <link rel="stylesheet" href="css/stats.css">
+    <link rel="icon" type="image/png" href="img/favicon.png">
+</head>
+<body>
+    <div class="stats-container" style="display: none;">
+        <div class="stats-header">
+            <div class="user-avatar" id="userAvatar">
+                <!-- Se llenará con JavaScript -->
+            </div>
+            <div class="user-info">
+                <h1 id="userName">Cargando...</h1>
+                <p id="userDetails">...</p>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">💘</div>
+                <div class="stat-value" id="totalMatches">0</div>
+                <div class="stat-label">Total de Matches</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">❤️</div>
+                <div class="stat-value" id="activeMatches">0</div>
+                <div class="stat-label">Matches Activos</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📤</div>
+                <div class="stat-value" id="sentMessages">0</div>
+                <div class="stat-label">Mensajes Enviados</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📥</div>
+                <div class="stat-value" id="receivedMessages">0</div>
+                <div class="stat-label">Mensajes Recibidos</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/stats.js"></script>
+</body>
+</html> 

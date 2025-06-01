@@ -57,25 +57,29 @@ namespace FiltringApp
             {
                 conexion.Open();
 
-                // 1️⃣ Verificar si ya existe un match entre los usuarios
-                string matchQuery = "SELECT ID_Match FROM Matches WHERE (ID_Acept = @idReceptor AND ID_Sol = @idEmisor) OR (ID_Acept = @idEmisor AND ID_Sol = @idReceptor)";
+                // Verificar si existe un match aceptado entre los usuarios
+                string matchQuery = @"SELECT ID_Match FROM Matches 
+                             WHERE ((ID_Sol = @idEmisor AND ID_Acept = @idReceptor) 
+                             OR (ID_Sol = @idReceptor AND ID_Acept = @idEmisor)) 
+                             AND Fecha_Aceptado IS NOT NULL";
+
                 MySqlCommand matchCmd = new MySqlCommand(matchQuery, conexion);
                 matchCmd.Parameters.AddWithValue("@idEmisor", idEmisor);
                 matchCmd.Parameters.AddWithValue("@idReceptor", idReceptor);
                 object matchId = matchCmd.ExecuteScalar();
 
-                // 2️⃣ Si no hay match, crearlo
                 if (matchId == null)
                 {
-                    MySqlCommand crearMatch = new MySqlCommand("INSERT INTO Matches (ID_Acept, ID_Sol, Fecha_Solicitud) VALUES (@idReceptor, @idEmisor, NOW())", conexion);
-                    crearMatch.Parameters.AddWithValue("@idEmisor", idEmisor);
-                    crearMatch.Parameters.AddWithValue("@idReceptor", idReceptor);
-                    crearMatch.ExecuteNonQuery();
-                    matchId = crearMatch.LastInsertedId;
+                    MessageBox.Show("No puedes enviar mensajes a este usuario sin antes haber hecho match.",
+                                    "Match requerido", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
                 }
 
-                // 3️⃣ Insertar el mensaje en la base de datos
-                MySqlCommand insertCmd = new MySqlCommand("INSERT INTO Mensaje (ID_Match, ID_Emisor, ID_Receptor, Contenido, Fecha_Hora) VALUES (@match, @emisor, @receptor, @contenido, NOW())", conexion);
+                // Insertar el mensaje en la base de datos
+                MySqlCommand insertCmd = new MySqlCommand(
+                    "INSERT INTO Mensaje (ID_Match, ID_Emisor, ID_Receptor, Contenido, Fecha_Hora) VALUES (@match, @emisor, @receptor, @contenido, NOW())",
+                    conexion);
+
                 insertCmd.Parameters.AddWithValue("@match", matchId);
                 insertCmd.Parameters.AddWithValue("@emisor", idEmisor);
                 insertCmd.Parameters.AddWithValue("@receptor", idReceptor);

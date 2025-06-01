@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Filtring</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/profile.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="nav-brand">Filtring</div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Inicio</a>
+                <a href="#" class="nav-link active">Mi Perfil</a>
+                <a href="#" class="nav-link" id="logout">Cerrar Sesión</a>
+            </div>
+        </nav>
+
+        <div class="profile-container">
+            <div class="profile-header">
+                <div class="photo-upload editable">
+                    <div class="photo-preview-container" onclick="document.getElementById('mainProfilePhoto').click()">
+                        <img id="mainPhotoPreview" src="placeholder.jpg" alt="Foto de perfil">
+                    </div>
+                    <input type="file" id="mainProfilePhoto" accept="image/*" style="display: none;">
+                    <button type="button" class="upload-btn" onclick="document.getElementById('mainProfilePhoto').click()">Cambiar foto principal</button>
+                </div>
+                <div class="profile-info">
+                    <h1 id="userName">Nombre del Usuario</h1>
+                    <p id="userLocation">Ubicación</p>
+                </div>
+            </div>
+
+            <form class="profile-form" id="profileForm">
+                <div class="form-group">
+                    <label for="biografia">Biografía</label>
+                    <textarea id="biografia" name="biografia" placeholder="Cuéntanos sobre ti..." class="editable"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="intereses">Intereses</label>
+                    <textarea id="intereses" name="intereses" placeholder="¿Qué te gusta hacer?" class="editable"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="preferencias">Preferencias</label>
+                    <textarea id="preferencias" name="preferencias" placeholder="¿Qué buscas en otras personas?" class="editable"></textarea>
+                </div>
+
+                <h3>Galería de Fotos</h3>
+                <div class="photo-gallery" id="photoGallery">
+                    <!-- Las fotos se cargarán dinámicamente aquí -->
+                </div>
+
+                <div class="upload-photos editable">
+                    <input type="file" id="additionalPhotos" accept="image/*" multiple style="display: none;">
+                    <button type="button" class="upload-btn" onclick="document.getElementById('additionalPhotos').click()">
+                        Añadir más fotos
+                    </button>
+                    <p class="help-text">Puedes subir hasta 5 fotos adicionales</p>
+                </div>
+
+                <button type="submit" class="btn-save editable">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/profile.js"></script>
+</body>
+</html> 

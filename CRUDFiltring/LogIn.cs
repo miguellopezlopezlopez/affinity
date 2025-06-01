@@ -6,6 +6,7 @@ using System.IO;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using System.Collections.Generic;
+using System.Net.Http;
 
 namespace FiltringApp
 {
@@ -14,12 +15,14 @@ namespace FiltringApp
         private MySqlConnection conexion;
         private string cadenaConexion;
         private Dictionary<string, string> config;
+        private readonly string baseUrl;
 
         public LogIn()
         {
             InitializeComponent();
             CargarConfiguracion();
-            EjecutarScriptSQL(); // Ejecutar el script SQL al iniciar la aplicación
+            EjecutarScriptSQL(); // Ejecutar el script SQL al iniciar la aplicacin
+            baseUrl = "http://localhost"; // This should come from config in production
         }
 
         private void CargarConfiguracion()
@@ -41,20 +44,20 @@ namespace FiltringApp
                 }
                 else
                 {
-                    MessageBox.Show("Error en la configuración YAML: faltan parámetros obligatorios.");
+                    MessageBox.Show("Error en la configuracin YAML: faltan parmetros obligatorios.");
                     Environment.Exit(1);
                 }
             }
             else
             {
-                MessageBox.Show("Archivo de configuración no encontrado.");
+                MessageBox.Show("Archivo de configuracin no encontrado.");
                 Environment.Exit(1);
             }
         }
 
         private void EjecutarScriptSQL()
         {
-            string scriptPath = "filtringDB.sql"; // Asegúrate de que el archivo está en el mismo directorio que el ejecutable
+            string scriptPath = "filtringDB.sql";
 
             if (File.Exists(scriptPath))
             {
@@ -78,16 +81,16 @@ namespace FiltringApp
             }
             else
             {
-                MessageBox.Show("El archivo filtringDB.sql no se encontró. Asegúrate de que el script esté en la carpeta del ejecutable.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("El archivo filtringDB.sql no se encontr. Asegrate de que el script est en la carpeta del ejecutable.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void btnLogIn_Click(object sender, EventArgs e)
+        private async void btnLogIn_Click(object sender, EventArgs e)
         {
             string usuario = txtUser.Text.Trim();
-            string contraseña = txtPwd.Text.Trim();
+            string contrasea = txtPwd.Text.Trim();
 
-            if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(contraseña))
+            if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(contrasea))
             {
                 MessageBox.Show("Por favor, complete todos los campos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
@@ -100,38 +103,53 @@ namespace FiltringApp
                     conexion.Open();
                 }
 
-                string consulta = "SELECT ID, User FROM Usuario WHERE User = @usuario AND Password = @contraseña";
+                string consulta = "SELECT ID, User FROM Usuario WHERE User = @usuario AND Password = @contrasea";
                 MySqlCommand cmd = new MySqlCommand(consulta, conexion);
                 cmd.Parameters.AddWithValue("@usuario", usuario);
-                cmd.Parameters.AddWithValue("@contraseña", contraseña);
-                MySqlDataReader reader = cmd.ExecuteReader();
+                cmd.Parameters.AddWithValue("@contrasea", contrasea);
+                MySqlDataReader resultado = cmd.ExecuteReader();
 
-                if (reader.Read())
+                if (resultado.HasRows)
                 {
-                    int idUsuario = Convert.ToInt32(reader["ID"]);
-                    string usuarioAutenticado = reader["User"].ToString();
-
-                    MessageBox.Show("Inicio de sesión exitoso", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    this.Hide(); // Oculta LogIn, pero no lo cierra
-
-                    Form formularioDestino;
-                    if (usuario.ToLower() == "admin")
+                    resultado.Read();
+                    string usuarioAutenticado = resultado.GetString("User");
+                    int userId = resultado.GetInt32("ID");
+                    
+                    try
                     {
-                        formularioDestino = new AdminForm(usuarioAutenticado);
-                    }
-                    else
-                    {
-                        formularioDestino = new MainForm(usuarioAutenticado);
-                    }
+                        // Intentar establecer la sesiÃ³n web
+                        using (var httpClient = new HttpClient())
+                        {
+                            var response = await httpClient.GetAsync($"{baseUrl}/page/api/set_session.php?userId={userId}");
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                MessageBox.Show("Error al establecer la sesiÃ³n web. Algunas funciones pueden no estar disponibles.", 
+                                    "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            }
+                        }
 
-                    formularioDestino.ShowDialog();
-                    this.Show(); // Muestra nuevamente LogIn cuando el otro formulario se cierre
+                        Form formularioDestino = new MainForm(usuarioAutenticado);
+                        this.Hide();
+                        formularioDestino.ShowDialog();
+                        this.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error al conectar con el servidor web: {ex.Message}\nAlgunas funciones pueden no estar disponibles.", 
+                            "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        
+                        // Continuar con la aplicaciÃ³n de escritorio aunque falle la web
+                        Form formularioDestino = new MainForm(usuarioAutenticado);
+                        this.Hide();
+                        formularioDestino.ShowDialog();
+                        this.Close();
+                    }
                 }
                 else
                 {
-                    MessageBox.Show("Usuario o contraseña incorrectos", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Usuario o contraseÃ±a incorrectos", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-                reader.Close();
+                resultado.Close();
             }
             catch (Exception ex)
             {
@@ -148,8 +166,34 @@ namespace FiltringApp
 
         private void btnRegistro_Click(object sender, EventArgs e)
         {
-            RegistroForm registroForm = new RegistroForm();
-            registroForm.ShowDialog();
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = $"{baseUrl}/page/register.html",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al abrir la pÃ¡gina web: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = $"{baseUrl}/page/index.html",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al abrir la pÃ¡gina web: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }
