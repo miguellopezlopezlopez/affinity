@@ -1,42 +1,121 @@
-.profile-container {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: var(--bg-secondary);
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+/* Variables del tema */
+:root {
+    --primary-color: #6c5ce7;
+    --secondary-color: #a29bfe;
+    --accent-color: #fd79a8;
+    --dark-color: #2d3436;
+    --light-color: #f9f9f9;
+    --gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    --accent-gradient: linear-gradient(135deg, var(--accent-color), #e84393);
 }
 
+/* Estilos generales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #F8F9FE;
+    min-height: 100vh;
+    color: var(--dark-color);
+}
+
+/* Navbar */
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background: white;
+    padding: 1rem 2rem;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-brand {
+    font-size: 2.8rem;
+    font-weight: 800;
+    text-decoration: none;
+    letter-spacing: 1px;
+    color: var(--primary-color);
+}
+
+.nav-brand span {
+    color: var(--accent-color);
+}
+
+.nav-menu {
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-link {
+    color: #666;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #7C5CFF;
+}
+
+.nav-link.active {
+    color: white;
+    background: #7C5CFF;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+}
+
+/* Contenedor principal */
+.container {
+    min-height: 100vh;
+    padding-top: 100px;
+}
+
+/* Contenedor del perfil */
+.profile-container {
+    max-width: 1200px;
+    width: 90%;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Header del perfil */
 .profile-header {
     display: flex;
     align-items: center;
-    gap: 2rem;
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #f0f2f5;
 }
 
-.profile-photo {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid var(--primary);
-}
-
+/* Foto de perfil */
 .photo-upload {
-    margin: 1rem 0;
+    position: relative;
 }
 
 .photo-preview-container {
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
     border-radius: 50%;
-    border: 2px dashed var(--primary);
+    border: 3px dashed var(--primary-color);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     overflow: hidden;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    background: rgba(108, 92, 231, 0.05);
+    transition: all 0.3s ease;
 }
 
 .photo-preview-container img {
@@ -45,46 +124,120 @@
     object-fit: cover;
 }
 
-.profile-info {
-    flex-grow: 1;
+.photo-preview-container:hover {
+    background: rgba(108, 92, 231, 0.1);
+    transform: scale(1.02);
 }
 
+.upload-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--gradient);
+    color: white;
+    border: none;
+    border-radius: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3);
+}
+
+/* Información del perfil */
+.profile-info {
+    flex: 1;
+    margin-left: 2rem;
+}
+
+.profile-info h1 {
+    margin: 0;
+    color: #333;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.profile-info p {
+    margin: 0.5rem 0 0;
+    color: #666;
+    font-size: 1rem;
+}
+
+/* Formulario del perfil */
 .profile-form {
-    display: grid;
-    gap: 1.5rem;
+    margin-top: 2rem;
 }
 
 .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .form-group label {
     display: block;
     margin-bottom: 0.5rem;
-    color: var(--text-primary);
+    color: var(--dark-color);
+    font-weight: 500;
 }
 
 .form-group textarea {
     width: 100%;
-    min-height: 100px;
-    padding: 0.5rem;
-    border: 1px solid var(--border);
-    border-radius: 4px;
+    padding: 1rem;
+    border: 1px solid rgba(108, 92, 231, 0.2);
+    border-radius: 15px;
     resize: vertical;
+    min-height: 100px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
 }
 
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+}
+
+/* Títulos de sección */
+h3 {
+    color: var(--dark-color);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 2rem 0 1.5rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background: var(--gradient);
+    border-radius: 3px;
+}
+
+/* Galería de fotos */
 .photo-gallery {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-top: 2rem;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
 }
 
 .gallery-item {
     position: relative;
-    aspect-ratio: 1;
-    border-radius: 8px;
+    border-radius: 15px;
     overflow: hidden;
+    aspect-ratio: 1;
+    transition: all 0.3s ease;
+}
+
+.gallery-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(108, 92, 231, 0.2);
 }
 
 .gallery-item img {
@@ -95,36 +248,139 @@
 
 .gallery-item .delete-photo {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    background: rgba(255, 0, 0, 0.7);
-    color: white;
-    border: none;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s ease;
 }
 
+.gallery-item:hover .delete-photo {
+    opacity: 1;
+}
+
+.gallery-item .delete-photo:hover {
+    background: #ff4757;
+    color: white;
+}
+
+/* Botón de subir fotos */
 .upload-photos {
-    margin-top: 1rem;
+    width: 100%;
+    padding: 2rem;
+    border: 2px dashed rgba(108, 92, 231, 0.3);
+    border-radius: 15px;
     text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1.5rem;
 }
 
+.upload-photos:hover {
+    background: rgba(108, 92, 231, 0.05);
+}
+
+/* Botón de guardar */
 .btn-save {
-    background: var(--primary);
+    display: block;
+    width: 100%;
+    max-width: 200px;
+    margin: 2rem auto;
+    padding: 1rem;
+    background: var(--gradient);
     color: white;
     border: none;
-    padding: 0.75rem 2rem;
-    border-radius: 4px;
+    border-radius: 25px;
+    font-weight: 600;
     cursor: pointer;
-    font-size: 1rem;
-    transition: background 0.3s;
+    transition: all 0.3s ease;
 }
 
 .btn-save:hover {
-    background: var(--primary-dark);
-} 
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3);
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    opacity: 0;
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .profile-container {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .profile-info {
+        margin: 1.5rem 0 0 0;
+    }
+
+    .photo-preview-container {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto 1.5rem;
+    }
+
+    .photo-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 1rem;
+    }
+
+    .btn-save {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding-top: 80px;
+    }
+
+    .profile-container {
+        width: 95%;
+        padding: 1rem;
+    }
+
+    .photo-preview-container {
+        width: 120px;
+        height: 120px;
+    }
+
+    .photo-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+
+    .profile-info h1 {
+        font-size: 1.5rem;
+    }
+
+    .upload-photos {
+        padding: 1.5rem;
+    }
+}

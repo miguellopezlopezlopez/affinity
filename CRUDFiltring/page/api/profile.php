@@ -1,7 +1,8 @@
 <?php
-require_once 'utils/session.php';
+session_start();
 
-header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Origin: http://localhost');
+header('Access-Control-Allow-Credentials: true');
 header('Content-Type: application/json; charset=UTF-8');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
@@ -17,13 +18,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit();
 }
 
-// Verificar autenticación
-$currentUserId = getCurrentUserId();
-if (!$currentUserId) {
+// ✅ CORREGIDO: Verificar autenticación directamente
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'No autenticado']);
     exit();
 }
+
+$currentUserId = $_SESSION['user_id'];
 
 // Obtener el ID del usuario del perfil a mostrar
 $profileUserId = isset($_GET['userId']) ? $_GET['userId'] : $currentUserId;
@@ -39,7 +41,7 @@ try {
 
     // Obtener datos básicos del usuario
     $query = "SELECT u.User, u.Nombre, u.Apellido, u.Ubicacion, 
-                     p.Biografia, p.Intereses, p.Preferencias, p.FotoPrincipal
+              p.Biografia, p.Intereses, p.Preferencias, p.FotoPrincipal
               FROM Usuario u
               LEFT JOIN Perfil p ON u.ID = p.ID_User
               WHERE u.ID = ?";
@@ -95,4 +97,5 @@ try {
     if (isset($conn)) {
         $conn->close();
     }
-} 
+}
+?>

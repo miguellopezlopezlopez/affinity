@@ -3,17 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Perfil - Filtring</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>Mi Perfil - Affinity</title>
     <link rel="stylesheet" href="css/profile.css">
+    <link rel="icon" type="image/png" href="img/favicon.png">
 </head>
 <body>
+<script>
+// Verificar autenticación antes de cargar la página
+async function checkAuth() {
+    try {
+        // FIXED: Usar URLs dinámicas como en login.js
+        const checkUrls = [
+            `${window.location.protocol}//${window.location.hostname}/page/api/check_session.php`,
+            `${window.location.protocol}//${window.location.hostname}/api/check_session.php`,
+            './api/check_session.php',
+            'api/check_session.php'
+        ];
+        
+        console.log('Verificando autenticación con URLs:', checkUrls);
+        
+        for (const url of checkUrls) {
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Respuesta de verificación:', data);
+                    
+                    if (!data.authenticated) {
+                        // No hay sesión activa, redirigir al login
+                        console.log('Usuario no autenticado, redirigiendo...');
+                        sessionStorage.setItem('redirectAfterLogin', window.location.href);
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    
+                    // Usuario autenticado, continuar cargando la página
+                    console.log('Usuario autenticado:', data.user);
+                    
+                    // Opcional: actualizar sessionStorage con datos de la sesión
+                    sessionStorage.setItem('userId', data.user.id);
+                    sessionStorage.setItem('username', data.user.username);
+                    sessionStorage.setItem('userEmail', data.user.email);
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    
+                    return; // Salir del bucle, verificación exitosa
+                }
+            } catch (err) {
+                console.log(`Error con URL ${url}:`, err.message);
+                continue; // Probar siguiente URL
+            }
+        }
+        
+        // Si ninguna URL funcionó, redirigir por seguridad
+        console.log('No se pudo verificar la sesión, redirigiendo al login');
+        sessionStorage.setItem('redirectAfterLogin', window.location.href);
+        window.location.href = 'login.html';
+        
+    } catch (error) {
+        console.error('Error verificando autenticación:', error);
+        // En caso de error, redirigir al login por seguridad
+        sessionStorage.setItem('redirectAfterLogin', window.location.href);
+        window.location.href = 'login.html';
+    }
+}
+
+// Ejecutar verificación inmediatamente
+checkAuth();
+</script>
+
     <div class="container">
         <nav class="navbar">
-            <div class="nav-brand">Filtring</div>
+            <a href="index.html" class="nav-brand">Affinity<span>.</span></a>
             <div class="nav-menu">
                 <a href="index.html" class="nav-link">Inicio</a>
                 <a href="#" class="nav-link active">Mi Perfil</a>
+                <a href="stats.html" class="nav-link">Estadísticas</a>
                 <a href="#" class="nav-link" id="logout">Cerrar Sesión</a>
             </div>
         </nav>

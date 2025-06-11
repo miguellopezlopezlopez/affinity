@@ -49,7 +49,7 @@ namespace FiltringApp
             try
             {
                 conexion.Open();
-                string consulta = "SELECT ID, User, Nombre, Apellido, Genero, Ubicacion FROM Usuario WHERE ID != @idUsuario";
+                string consulta = "SELECT ID, User, Nombre, Apellido, Genero, Ubicacion FROM Usuario WHERE ID != @idUsuario AND ID != 1";
                 MySqlCommand cmd = new MySqlCommand(consulta, conexion);
                 cmd.Parameters.AddWithValue("@idUsuario", idUsuarioAutenticado);
                 MySqlDataAdapter adaptador = new MySqlDataAdapter(cmd);
@@ -113,6 +113,11 @@ namespace FiltringApp
                     }
                 }
             }
+        }
+
+        private void btnRefrescar_Click(object sender, EventArgs e)
+        {
+            CargarUsuarios();
         }
     }
 }

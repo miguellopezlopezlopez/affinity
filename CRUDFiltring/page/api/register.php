@@ -48,45 +48,67 @@ if(
             throw new Exception('Error de conexión: ' . $conn->connect_error);
         }
 
-        // Verificar si el usuario o email ya existen
-        $check_query = "SELECT * FROM Usuario WHERE User = ? OR Email = ?";
-        $check_stmt = $conn->prepare($check_query);
-        $check_stmt->bind_param("ss", $data->user, $data->email);
-        $check_stmt->execute();
-        $result = $check_stmt->get_result();
+        // Iniciar transacción
+        $conn->begin_transaction();
 
-        if($result->num_rows > 0) {
-            $response['success'] = false;
-            $response['message'] = 'El usuario o correo electrónico ya están registrados';
-            http_response_code(409); // Conflict
-        } else {
-            // Preparar la consulta de inserción
-            $query = "INSERT INTO Usuario (User, Email, Password, Nombre, Apellido, Genero, Foto, Ubicacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try {
+            // Verificar si el usuario o email ya existen
+            $check_query = "SELECT * FROM Usuario WHERE User = ? OR Email = ?";
+            $check_stmt = $conn->prepare($check_query);
+            $check_stmt->bind_param("ss", $data->user, $data->email);
+            $check_stmt->execute();
+            $result = $check_stmt->get_result();
+
+            if($result->num_rows > 0) {
+                throw new Exception('El usuario o correo electrónico ya están registrados');
+            }
+
+            // Preparar la consulta de inserción de usuario
+            $query = "INSERT INTO Usuario (User, Email, Password, Nombre, Apellido, Genero, Ubicacion) VALUES (?, ?, ?, ?, ?, ?, ?)";
             
             $stmt = $conn->prepare($query);
             
-            // La foto y ubicación pueden estar vacías inicialmente
-            $foto = $data->foto ?? '';
+            // La ubicación puede estar vacía inicialmente
             $ubicacion = $data->ubicacion ?? '';
             
-            $stmt->bind_param("ssssssss", 
+            $stmt->bind_param("sssssss", 
                 $data->user,
                 $data->email,
                 $data->password,
                 $data->nombre,
                 $data->apellido,
                 $data->genero,
-                $foto,
                 $ubicacion
             );
 
-            if($stmt->execute()) {
-                $response['success'] = true;
-                $response['message'] = 'Usuario registrado exitosamente';
-                http_response_code(201); // Created
-            } else {
+            if(!$stmt->execute()) {
                 throw new Exception('Error al registrar el usuario: ' . $stmt->error);
             }
+
+            // Obtener el ID del usuario recién insertado
+            $userId = $conn->insert_id;
+
+            // Crear entrada en la tabla Perfil
+            $perfil_query = "INSERT INTO Perfil (ID_User) VALUES (?)";
+            $perfil_stmt = $conn->prepare($perfil_query);
+            $perfil_stmt->bind_param("i", $userId);
+            
+            if(!$perfil_stmt->execute()) {
+                throw new Exception('Error al crear el perfil del usuario');
+            }
+
+            // Si todo salió bien, confirmar la transacción
+            $conn->commit();
+
+            $response['success'] = true;
+            $response['message'] = 'Usuario registrado exitosamente';
+            $response['userId'] = $userId;
+            http_response_code(201); // Created
+
+        } catch (Exception $e) {
+            // Si algo salió mal, revertir la transacción
+            $conn->rollback();
+            throw $e;
         }
 
         $conn->close();

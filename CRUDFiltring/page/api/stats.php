@@ -105,7 +105,10 @@ try {
     }
 
     // Obtener información del usuario
-    $query = "SELECT User, Nombre, Apellido, Genero FROM Usuario WHERE ID = ?";
+    $query = "SELECT u.User, u.Nombre, u.Apellido, u.Genero, p.FotoPrincipal 
+              FROM Usuario u 
+              LEFT JOIN Perfil p ON u.ID = p.ID_User 
+              WHERE u.ID = ?";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $userId);
     $stmt->execute();

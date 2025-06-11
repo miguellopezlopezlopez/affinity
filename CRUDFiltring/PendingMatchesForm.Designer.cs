@@ -21,104 +21,126 @@
 
         private void InitializeComponent()
         {
-            this.lblTitulo = new System.Windows.Forms.Label();
-            this.dataGridViewSolicitudes = new System.Windows.Forms.DataGridView();
-            this.btnAceptarMatch = new System.Windows.Forms.Button();
-            this.btnRechazarMatch = new System.Windows.Forms.Button();
-            this.btnRefrescar = new System.Windows.Forms.Button();
-            this.btnCerrar = new System.Windows.Forms.Button();
+            dataGridViewSolicitudes = new DataGridView();
+            btnAceptarMatch = new Button();
+            btnRechazarMatch = new Button();
+            btnRefrescar = new Button();
+            btnCerrar = new Button();
+            lblTitulo = new Label();
 
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewSolicitudes)).BeginInit();
-            this.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridViewSolicitudes).BeginInit();
+            SuspendLayout();
 
-            // 
-            // lblTitulo
-            // 
-            this.lblTitulo.AutoSize = true;
-            this.lblTitulo.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.lblTitulo.Location = new System.Drawing.Point(120, 20);
-            this.lblTitulo.Name = "lblTitulo";
-            this.lblTitulo.Size = new System.Drawing.Size(250, 25);
-            this.lblTitulo.TabIndex = 0;
-            this.lblTitulo.Text = "Solicitudes de Match Pendientes";
+            // Configuración del formulario
+            this.Text = "Solicitudes de Match Pendientes";
+            this.ClientSize = new System.Drawing.Size(800, 600);
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.BackColor = System.Drawing.Color.White;
+            this.Padding = new Padding(20);
 
-            // 
-            // dataGridViewSolicitudes
-            // 
-            this.dataGridViewSolicitudes.AllowUserToAddRows = false;
-            this.dataGridViewSolicitudes.AllowUserToDeleteRows = false;
-            this.dataGridViewSolicitudes.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.dataGridViewSolicitudes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridViewSolicitudes.Location = new System.Drawing.Point(20, 60);
-            this.dataGridViewSolicitudes.Name = "dataGridViewSolicitudes";
-            this.dataGridViewSolicitudes.ReadOnly = true;
-            this.dataGridViewSolicitudes.RowTemplate.Height = 25;
-            this.dataGridViewSolicitudes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridViewSolicitudes.Size = new System.Drawing.Size(440, 200);
-            this.dataGridViewSolicitudes.TabIndex = 1;
+            // Título
+            lblTitulo.Text = "Solicitudes de Match Pendientes";
+            lblTitulo.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
+            lblTitulo.ForeColor = System.Drawing.Color.FromArgb(33, 33, 33);
+            lblTitulo.Dock = DockStyle.Top;
+            lblTitulo.TextAlign = ContentAlignment.MiddleCenter;
+            lblTitulo.Height = 50;
 
-            // 
-            // btnAceptarMatch
-            // 
-            this.btnAceptarMatch.Location = new System.Drawing.Point(20, 280);
-            this.btnAceptarMatch.Name = "btnAceptarMatch";
-            this.btnAceptarMatch.Size = new System.Drawing.Size(140, 40);
-            this.btnAceptarMatch.TabIndex = 2;
-            this.btnAceptarMatch.Text = "Aceptar Match";
-            this.btnAceptarMatch.UseVisualStyleBackColor = true;
-            this.btnAceptarMatch.Click += new System.EventHandler(this.btnAceptarMatch_Click);
+            // DataGridView
+            dataGridViewSolicitudes.Dock = DockStyle.Fill;
+            dataGridViewSolicitudes.BackgroundColor = System.Drawing.Color.White;
+            dataGridViewSolicitudes.BorderStyle = BorderStyle.None;
+            dataGridViewSolicitudes.AllowUserToAddRows = false;
+            dataGridViewSolicitudes.AllowUserToDeleteRows = false;
+            dataGridViewSolicitudes.AllowUserToResizeRows = false;
+            dataGridViewSolicitudes.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewSolicitudes.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridViewSolicitudes.MultiSelect = false;
+            dataGridViewSolicitudes.ReadOnly = true;
+            dataGridViewSolicitudes.RowHeadersVisible = false;
+            dataGridViewSolicitudes.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 69, 120);
+            dataGridViewSolicitudes.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
+            dataGridViewSolicitudes.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            dataGridViewSolicitudes.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(245, 245, 245);
+            dataGridViewSolicitudes.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(33, 33, 33);
+            dataGridViewSolicitudes.ColumnHeadersHeight = 40;
+            dataGridViewSolicitudes.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            dataGridViewSolicitudes.EnableHeadersVisualStyles = false;
+            dataGridViewSolicitudes.GridColor = System.Drawing.Color.FromArgb(240, 240, 240);
+            dataGridViewSolicitudes.Location = new Point(20, 70);
+            dataGridViewSolicitudes.Size = new Size(760, 450);
 
-            // 
-            // btnRechazarMatch
-            // 
-            this.btnRechazarMatch.Location = new System.Drawing.Point(170, 280);
-            this.btnRechazarMatch.Name = "btnRechazarMatch";
-            this.btnRechazarMatch.Size = new System.Drawing.Size(140, 40);
-            this.btnRechazarMatch.TabIndex = 3;
-            this.btnRechazarMatch.Text = "Rechazar Match";
-            this.btnRechazarMatch.UseVisualStyleBackColor = true;
-            this.btnRechazarMatch.Click += new System.EventHandler(this.btnRechazarMatch_Click);
+            // Panel de botones
+            Panel buttonPanel = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 60,
+                Padding = new Padding(0, 10, 0, 10)
+            };
 
-            // 
-            // btnRefrescar
-            // 
-            this.btnRefrescar.Location = new System.Drawing.Point(320, 280);
-            this.btnRefrescar.Name = "btnRefrescar";
-            this.btnRefrescar.Size = new System.Drawing.Size(140, 40);
-            this.btnRefrescar.TabIndex = 4;
-            this.btnRefrescar.Text = "Refrescar";
-            this.btnRefrescar.UseVisualStyleBackColor = true;
-            this.btnRefrescar.Click += new System.EventHandler(this.btnRefrescar_Click);
+            // Botón Aceptar Match
+            btnAceptarMatch.Text = "✓ Aceptar Match";
+            btnAceptarMatch.Size = new Size(150, 40);
+            btnAceptarMatch.Location = new Point(20, 10);
+            btnAceptarMatch.FlatStyle = FlatStyle.Flat;
+            btnAceptarMatch.BackColor = System.Drawing.Color.FromArgb(76, 175, 80);
+            btnAceptarMatch.ForeColor = System.Drawing.Color.White;
+            btnAceptarMatch.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            btnAceptarMatch.Cursor = Cursors.Hand;
+            btnAceptarMatch.FlatAppearance.BorderSize = 0;
+            btnAceptarMatch.Click += new EventHandler(btnAceptarMatch_Click);
 
-            // 
-            // btnCerrar
-            // 
-            this.btnCerrar.Location = new System.Drawing.Point(170, 330);
-            this.btnCerrar.Name = "btnCerrar";
-            this.btnCerrar.Size = new System.Drawing.Size(140, 30);
-            this.btnCerrar.TabIndex = 5;
-            this.btnCerrar.Text = "Cerrar";
-            this.btnCerrar.UseVisualStyleBackColor = true;
-            this.btnCerrar.Click += new System.EventHandler(this.btnCerrar_Click);
+            // Botón Rechazar Match
+            btnRechazarMatch.Text = "✕ Rechazar Match";
+            btnRechazarMatch.Size = new Size(150, 40);
+            btnRechazarMatch.Location = new Point(190, 10);
+            btnRechazarMatch.FlatStyle = FlatStyle.Flat;
+            btnRechazarMatch.BackColor = System.Drawing.Color.FromArgb(244, 67, 54);
+            btnRechazarMatch.ForeColor = System.Drawing.Color.White;
+            btnRechazarMatch.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            btnRechazarMatch.Cursor = Cursors.Hand;
+            btnRechazarMatch.FlatAppearance.BorderSize = 0;
+            btnRechazarMatch.Click += new EventHandler(btnRechazarMatch_Click);
 
-            // 
-            // PendingMatchesForm
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(480, 380);
-            this.Controls.Add(this.btnCerrar);
-            this.Controls.Add(this.btnRefrescar);
-            this.Controls.Add(this.btnRechazarMatch);
-            this.Controls.Add(this.btnAceptarMatch);
-            this.Controls.Add(this.dataGridViewSolicitudes);
-            this.Controls.Add(this.lblTitulo);
-            this.Name = "PendingMatchesForm";
-            this.Text = "Solicitudes de Match";
-            this.Load += new System.EventHandler(this.PendingMatchesForm_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewSolicitudes)).EndInit();
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            // Botón Refrescar
+            btnRefrescar.Text = "↻ Refrescar";
+            btnRefrescar.Size = new Size(150, 40);
+            btnRefrescar.Location = new Point(360, 10);
+            btnRefrescar.FlatStyle = FlatStyle.Flat;
+            btnRefrescar.BackColor = System.Drawing.Color.FromArgb(33, 150, 243);
+            btnRefrescar.ForeColor = System.Drawing.Color.White;
+            btnRefrescar.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            btnRefrescar.Cursor = Cursors.Hand;
+            btnRefrescar.FlatAppearance.BorderSize = 0;
+            btnRefrescar.Click += new EventHandler(btnRefrescar_Click);
+
+            // Botón Cerrar
+            btnCerrar.Text = "Cerrar";
+            btnCerrar.Size = new Size(150, 40);
+            btnCerrar.Location = new Point(530, 10);
+            btnCerrar.FlatStyle = FlatStyle.Flat;
+            btnCerrar.BackColor = System.Drawing.Color.FromArgb(158, 158, 158);
+            btnCerrar.ForeColor = System.Drawing.Color.White;
+            btnCerrar.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            btnCerrar.Cursor = Cursors.Hand;
+            btnCerrar.FlatAppearance.BorderSize = 0;
+            btnCerrar.Click += new EventHandler(btnCerrar_Click);
+
+            // Agregar controles al formulario
+            buttonPanel.Controls.Add(btnAceptarMatch);
+            buttonPanel.Controls.Add(btnRechazarMatch);
+            buttonPanel.Controls.Add(btnRefrescar);
+            buttonPanel.Controls.Add(btnCerrar);
+
+            this.Controls.Add(buttonPanel);
+            this.Controls.Add(dataGridViewSolicitudes);
+            this.Controls.Add(lblTitulo);
+
+            ((System.ComponentModel.ISupportInitialize)dataGridViewSolicitudes).EndInit();
+            ResumeLayout(false);
         }
     }
 }

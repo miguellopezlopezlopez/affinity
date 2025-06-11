@@ -26,7 +26,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function getUserIdFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('userId');
+    const urlUserId = urlParams.get('userId');
+    // Si no hay userId en la URL, usar el de la sesión
+    if (!urlUserId) {
+        return sessionStorage.getItem('userId');
+    }
+    return urlUserId;
 }
 
 async function loadProfileData() {
@@ -34,8 +39,10 @@ async function loadProfileData() {
         const userId = getUserIdFromUrl();
         const url = userId ? `/page/api/profile.php?userId=${userId}` : '/page/api/profile.php';
 
-        // Cargar datos del perfil desde el servidor
-        const response = await fetch(url);
+        // ✅ CORREGIDO: Agregado credentials: 'include'
+        const response = await fetch(url, {
+            credentials: 'include'
+        });
         
         if (response.status === 401) {
             // No autenticado, redirigir al login
@@ -105,28 +112,67 @@ async function handleMainPhotoUpload(event) {
     if (!file) return;
 
     try {
+        console.log('Iniciando subida de foto principal...');
+        console.log('Archivo seleccionado:', file.name);
+        
+        const userId = getUserIdFromUrl();
+        console.log('userId from URL:', userId);
+        
+        if (!userId) {
+            throw new Error('No se pudo obtener el ID del usuario');
+        }
+        
         const formData = new FormData();
         formData.append('foto', file);
         formData.append('tipo', 'principal');
+        formData.append('userId', userId);
 
-        const response = await fetch('/page/api/upload_photo.php', {
-            method: 'POST',
-            body: formData
+        console.log('FormData creado:', {
+            foto: file.name,
+            tipo: 'principal',
+            userId: userId
         });
 
+        // ✅ CORREGIDO: Agregado credentials: 'include'
+        console.log('Enviando solicitud al servidor...');
+        const response = await fetch('/page/api/upload_photo.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+
+        console.log('Respuesta del servidor:', response.status);
+
         if (response.status === 401) {
+            console.log('Error de autenticación');
             window.location.href = '/page/login.html';
             return;
         }
 
         const data = await response.json();
+        console.log('Datos de respuesta:', data);
+
         if (!data.success) {
             throw new Error(data.message || 'Error al subir la foto');
         }
 
-        document.getElementById('mainPhotoPreview').src = data.url;
+        // Buscar o crear el elemento de imagen
+        let imgElement = document.getElementById('mainPhotoPreview');
+        if (!imgElement) {
+            console.log('Creando nuevo elemento de imagen...');
+            imgElement = document.createElement('img');
+            imgElement.id = 'mainPhotoPreview';
+            imgElement.alt = 'Foto de perfil';
+            const container = document.querySelector('.photo-preview-container');
+            container.appendChild(imgElement);
+        }
+        
+        // Actualizar la imagen
+        imgElement.src = data.url;
+        console.log('Imagen actualizada correctamente');
+
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error detallado:', error);
         alert('Error al subir la foto: ' + error.message);
     }
 }
@@ -136,38 +182,89 @@ async function handleAdditionalPhotosUpload(event) {
     const maxFiles = 5;
     const currentPhotos = document.querySelectorAll('.gallery-item').length;
 
+    console.log('Iniciando subida de fotos adicionales...');
+    console.log('Número de archivos seleccionados:', files.length);
+    console.log('Fotos actuales en galería:', currentPhotos);
+
     if (currentPhotos + files.length > maxFiles) {
         alert(`Solo puedes tener un máximo de ${maxFiles} fotos en la galería`);
         return;
     }
 
+    // Obtener el ID del usuario
+    let userId = getUserIdFromUrl();
+    
+    // Si no hay ID en la URL, intentar obtenerlo de la sesión
+    if (!userId) {
+        userId = sessionStorage.getItem('userId');
+    }
+
+    // Si aún no hay ID, verificar la sesión
+    if (!userId) {
+        try {
+            const sessionResponse = await fetch('./api/check_session.php', {
+                credentials: 'include'
+            });
+            const sessionData = await sessionResponse.json();
+            if (sessionData.authenticated && sessionData.user && sessionData.user.id) {
+                userId = sessionData.user.id;
+                sessionStorage.setItem('userId', userId);
+            }
+        } catch (error) {
+            console.error('Error al verificar la sesión:', error);
+        }
+    }
+
+    if (!userId) {
+        alert('No se pudo obtener el ID del usuario. Por favor, inicia sesión nuevamente.');
+        window.location.href = 'login.html';
+        return;
+    }
+
     for (let file of files) {
         try {
+            console.log('Procesando archivo:', file.name);
+            
             const formData = new FormData();
             formData.append('foto', file);
             formData.append('tipo', 'galeria');
+            formData.append('userId', userId);
 
-            const response = await fetch('/page/api/upload_photo.php', {
-                method: 'POST',
-                body: formData
+            console.log('FormData creado:', {
+                foto: file.name,
+                tipo: 'galeria',
+                userId: userId
             });
 
+            console.log('Enviando solicitud al servidor...');
+            const response = await fetch('./api/upload_photo.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+
+            console.log('Respuesta del servidor:', response.status);
+
             if (response.status === 401) {
-                window.location.href = '/page/login.html';
+                console.log('Error de autenticación');
+                window.location.href = 'login.html';
                 return;
             }
 
             const data = await response.json();
+            console.log('Datos de respuesta:', data);
+
             if (!data.success) {
                 throw new Error(data.message || 'Error al subir la foto');
             }
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error detallado:', error);
             alert('Error al subir la foto: ' + error.message);
         }
     }
 
     // Recargar la galería después de subir todas las fotos
+    console.log('Recargando galería...');
     loadProfileData();
 }
 
@@ -175,12 +272,14 @@ async function deletePhoto(photoId) {
     if (!confirm('¿Estás seguro de que quieres eliminar esta foto?')) return;
 
     try {
+        // ✅ CORREGIDO: Agregado credentials: 'include'
         const response = await fetch('/page/api/delete_photo.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ photoId })
+            body: JSON.stringify({ photoId }),
+            credentials: 'include'
         });
 
         if (response.status === 401) {
@@ -202,40 +301,63 @@ async function deletePhoto(photoId) {
 
 async function saveProfileData() {
     try {
+        console.log('Iniciando guardado de datos del perfil...');
+        
+        const userId = getUserIdFromUrl();
+        console.log('userId from URL:', userId);
+        
+        if (!userId) {
+            throw new Error('No se pudo obtener el ID del usuario');
+        }
+
         const data = {
+            userId: userId,
             biografia: document.getElementById('biografia').value,
             intereses: document.getElementById('intereses').value,
             preferencias: document.getElementById('preferencias').value
         };
 
+        console.log('Datos a enviar:', data);
+
+        // ✅ CORREGIDO: Agregado credentials: 'include'
+        console.log('Enviando solicitud al servidor...');
         const response = await fetch('/page/api/update_profile.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
+            credentials: 'include'
         });
 
+        console.log('Respuesta del servidor:', response.status);
+
         if (response.status === 401) {
+            console.log('Error de autenticación');
             window.location.href = '/page/login.html';
             return;
         }
 
         const result = await response.json();
+        console.log('Datos de respuesta:', result);
+
         if (!result.success) {
             throw new Error(result.message || 'Error al actualizar el perfil');
         }
 
         alert('Perfil actualizado correctamente');
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error detallado:', error);
         alert('Error al guardar los cambios: ' + error.message);
     }
 }
 
 async function logout() {
     try {
-        const response = await fetch('/page/api/logout.php');
+        // ✅ CORREGIDO: Agregado credentials: 'include'
+        const response = await fetch('/page/api/logout.php', {
+            credentials: 'include'
+        });
         if (!response.ok) {
             throw new Error('Error al cerrar sesión');
         }
@@ -244,4 +366,4 @@ async function logout() {
     } finally {
         window.location.href = '/page/login.html';
     }
-} 
+}

@@ -1,8 +1,15 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json; charset=UTF-8');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Credentials: true');
+
+// Log de inicio
+error_log("=== DELETE_PHOTO.PHP INICIADO ===");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -10,63 +17,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    error_log("Método no permitido: " . $_SERVER['REQUEST_METHOD']);
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Método no permitido']);
     exit();
 }
 
-$input = json_decode(file_get_contents('php://input'), true);
+// Obtener datos del cuerpo de la solicitud
+$data = json_decode(file_get_contents('php://input'), true);
+error_log("Datos recibidos: " . print_r($data, true));
 
-if (!isset($input['photoId']) || !isset($input['userId'])) {
+// Validar datos requeridos
+if (!isset($data['photoId'])) {
+    error_log("ID de foto no proporcionado");
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Faltan datos requeridos']);
+    echo json_encode(['success' => false, 'message' => 'ID de foto no proporcionado']);
     exit();
 }
 
 try {
+    error_log("Conectando a la base de datos...");
     $conn = new mysqli('localhost', 'root', '', 'filtring');
 
     if ($conn->connect_error) {
-        throw new Exception('Error de conexión: ' . $conn->connect_error);
+        error_log("Error de conexión: " . $conn->connect_error);
+        throw new Exception('Error de conexión a la base de datos');
     }
-
-    $photoId = $conn->real_escape_string($input['photoId']);
-    $userId = $conn->real_escape_string($input['userId']);
 
     // Obtener la URL de la foto antes de eliminarla
-    $queryUrl = "SELECT URL FROM FotosPerfil WHERE ID = ? AND ID_User = ?";
-    $stmtUrl = $conn->prepare($queryUrl);
-    $stmtUrl->bind_param("ii", $photoId, $userId);
-    $stmtUrl->execute();
-    $result = $stmtUrl->get_result();
-    $foto = $result->fetch_assoc();
-
-    if (!$foto) {
-        throw new Exception('Foto no encontrada o no tienes permiso para eliminarla');
-    }
-
-    // Eliminar el registro de la base de datos
-    $query = "DELETE FROM FotosPerfil WHERE ID = ? AND ID_User = ?";
+    $query = "SELECT URL FROM FotosPerfil WHERE ID = ?";
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("ii", $photoId, $userId);
+    $stmt->bind_param("i", $data['photoId']);
     $stmt->execute();
-
-    if ($stmt->affected_rows > 0) {
-        // Eliminar el archivo físico
-        $filePath = '../' . $foto['URL'];
-        if (file_exists($filePath)) {
-            unlink($filePath);
+    $result = $stmt->get_result();
+    
+    if ($row = $result->fetch_assoc()) {
+        $photoUrl = $row['URL'];
+        $filePath = '../' . $photoUrl;
+        
+        // Eliminar el registro de la base de datos
+        $deleteQuery = "DELETE FROM FotosPerfil WHERE ID = ?";
+        $stmt = $conn->prepare($deleteQuery);
+        $stmt->bind_param("i", $data['photoId']);
+        
+        if ($stmt->execute()) {
+            // Intentar eliminar el archivo físico
+            if (file_exists($filePath)) {
+                unlink($filePath);
+                error_log("Archivo físico eliminado: $filePath");
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Foto eliminada correctamente'
+            ]);
+        } else {
+            throw new Exception('Error al eliminar la foto de la base de datos');
         }
-
-        echo json_encode([
-            'success' => true,
-            'message' => 'Foto eliminada correctamente'
-        ]);
     } else {
-        throw new Exception('No se pudo eliminar la foto');
+        throw new Exception('Foto no encontrada');
     }
 
 } catch (Exception $e) {
+    error_log("Error en delete_photo.php: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
@@ -76,4 +89,5 @@ try {
     if (isset($conn)) {
         $conn->close();
     }
+    error_log("=== DELETE_PHOTO.PHP TERMINADO ===");
 } 

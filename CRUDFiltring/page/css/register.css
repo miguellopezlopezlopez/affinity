@@ -384,115 +384,116 @@ body {
 }
 
 .photo-upload {
-    margin: 15px 0 25px;
-    text-align: center;
+    margin-bottom: 20px;
 }
 
 .photo-label {
     display: block;
-    margin-bottom: 12px;
-    color: var(--dark-color);
-    font-weight: 600;
-    font-size: 1.1rem;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 0.9rem;
 }
 
 .photo-preview-container {
-    width: 180px;
-    height: 180px;
-    border: 3px dashed var(--secondary-color);
-    border-radius: 50%;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    cursor: pointer;
-    transition: all 0.4s ease;
-    background-color: rgba(108, 92, 231, 0.05);
+    width: 150px;
+    height: 150px;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    margin: 10px auto;
     position: relative;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
 }
 
 .photo-preview-container:hover {
-    border-color: var(--primary-color);
-    background-color: rgba(108, 92, 231, 0.1);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(108, 92, 231, 0.2);
+    border-color: #007bff;
 }
 
 .photo-preview-container img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.photo-preview-container:hover img {
-    transform: scale(1.05);
-}
-
-.photo-preview-container::before {
-    content: '📸';
-    font-size: 2.5rem;
-    opacity: 0.7;
-    position: absolute;
-    transition: all 0.3s ease;
-}
-
-.photo-preview-container:hover::before {
-    opacity: 0.9;
-    transform: scale(1.1);
-}
-
-.photo-preview-container.has-image::before {
     display: none;
 }
 
-.photo-preview-container.has-image::after {
-    content: 'Cambiar foto';
+.photo-placeholder {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 8px 0;
-    font-size: 0.85rem;
-    opacity: 0;
-    transform: translateY(100%);
-    transition: all 0.3s ease;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #666;
 }
 
-.photo-preview-container.has-image:hover::after {
-    opacity: 1;
-    transform: translateY(0);
+.photo-placeholder svg {
+    margin-bottom: 10px;
+    color: #999;
+}
+
+.photo-placeholder p {
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+.photo-preview-container.has-image .photo-placeholder {
+    display: none;
+}
+
+.photo-preview-container.has-image img {
+    display: block;
+}
+
+.remove-photo {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    color: #ff3b30;
+    display: none;
+    z-index: 2;
+}
+
+.photo-preview-container.has-image .remove-photo {
+    display: block;
+}
+
+.remove-photo:hover {
+    background: rgba(255, 255, 255, 1);
 }
 
 .upload-btn {
-    display: inline-block;
-    margin: 20px auto 0;
-    padding: 10px 25px;
-    background: var(--gradient);
-    border: none;
-    border-radius: 25px;
-    color: white;
-    font-weight: 600;
-    font-size: 0.95rem;
+    display: block;
+    width: 100%;
+    padding: 8px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    color: #333;
     cursor: pointer;
+    font-size: 0.9rem;
     transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.2);
 }
 
 .upload-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(108, 92, 231, 0.3);
+    background: #e9ecef;
+    border-color: #ced4da;
 }
 
-.upload-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 10px rgba(108, 92, 231, 0.2);
+.photo-error {
+    display: none;
+    color: #ff3b30;
+    font-size: 0.8rem;
+    margin-top: 5px;
+    text-align: center;
 }
 
 .form-row {
@@ -825,4 +826,13 @@ body {
         font-size: 0.75rem;
         padding: 6px 0;
     }
+}
+
+/* Ajustes para el campo de ubicación */
+#location {
+    background-color: white;
+}
+
+#location:focus {
+    background-color: white;
 } 

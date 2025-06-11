@@ -7,6 +7,9 @@ using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Net;
+using System.Text.Json;
+using System.Diagnostics;
 
 namespace FiltringApp
 {
@@ -16,11 +19,18 @@ namespace FiltringApp
         private string cadenaConexion;
         private string usuarioAutenticado;
         private string rutaFoto = string.Empty;
+        private const string BASE_URL = "http://localhost/page/";
 
         public MainForm(string usuario)
         {
             InitializeComponent();
             usuarioAutenticado = usuario;
+            
+            // Configurar el PictureBox
+            pictureBoxFoto.SizeMode = PictureBoxSizeMode.Zoom;
+            pictureBoxFoto.BackColor = Color.White;
+            pictureBoxFoto.BorderStyle = BorderStyle.FixedSingle;
+
             CargarConfiguracion();
             CargarDatosUsuario();
         }
@@ -80,15 +90,41 @@ namespace FiltringApp
                     txtApellido.Text = row["Apellido"].ToString();
                     cmbGenero.SelectedItem = row["Genero"].ToString();
                     txtUbicacion.Text = row["Ubicacion"].ToString();
-
-                    // No cargamos la contraseña por seguridad
                     txtPassword.Text = "";
 
                     rutaFoto = row["Foto"].ToString();
-                    if (File.Exists(rutaFoto))
+                    
+                    // Limpiar imagen anterior si existe
+                    if (pictureBoxFoto.Image != null)
                     {
-                        pictureBoxFoto.Image = Image.FromFile(rutaFoto);
-                        pictureBoxFoto.SizeMode = PictureBoxSizeMode.StretchImage;
+                        var oldImage = pictureBoxFoto.Image;
+                        pictureBoxFoto.Image = null;
+                        oldImage.Dispose();
+                    }
+
+                    // Construir la URL completa para la imagen
+                    string imageUrl = rutaFoto;
+                    if (!string.IsNullOrEmpty(rutaFoto))
+                    {
+                        try
+                        {
+                            pictureBoxFoto.Image = CargarImagenDesdeUrl(rutaFoto);
+                            if (pictureBoxFoto.Image == null)
+                            {
+                                // Si falla la carga de la imagen, intentar cargar la imagen por defecto
+                                pictureBoxFoto.Image = CargarImagenDesdeUrl("images/default-profile.png");
+                            }
+                        }
+                        catch
+                        {
+                            // Si falla todo, no mostrar ninguna imagen
+                            pictureBoxFoto.Image = null;
+                        }
+                    }
+                    else
+                    {
+                        // Si no hay ruta de foto, cargar la imagen por defecto
+                        pictureBoxFoto.Image = CargarImagenDesdeUrl("images/default-profile.png");
                     }
                 }
             }
@@ -102,6 +138,305 @@ namespace FiltringApp
                 {
                     conexion.Close();
                 }
+            }
+        }
+
+        private bool SubirImagenAlServidor(string sourceFile, string fileName)
+        {
+            try
+            {
+                using (WebClient client = new WebClient())
+                {
+                    string uploadUrl = BASE_URL + "api/upload_photo.php";
+                    
+                    // Crear los datos del formulario
+                    string boundary = "---------------------------" + DateTime.Now.Ticks.ToString("x");
+                    client.Headers.Add("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+                    using (var memStream = new MemoryStream())
+                    {
+                        var boundarybytes = System.Text.Encoding.ASCII.GetBytes("--" + boundary + "\r\n");
+                        var endBoundaryBytes = System.Text.Encoding.ASCII.GetBytes("\r\n--" + boundary + "--\r\n");
+
+                        // Obtener el ID del usuario
+                        int userId = -1;
+                        if (conexion.State == ConnectionState.Closed)
+                        {
+                            conexion.Open();
+                        }
+                        try
+                        {
+                            string consultaId = "SELECT ID FROM Usuario WHERE User = @usuario";
+                            using (MySqlCommand cmd = new MySqlCommand(consultaId, conexion))
+                            {
+                                cmd.Parameters.AddWithValue("@usuario", usuarioAutenticado);
+                                object resultado = cmd.ExecuteScalar();
+                                if (resultado != null)
+                                {
+                                    userId = Convert.ToInt32(resultado);
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            if (conexion.State == ConnectionState.Open)
+                            {
+                                conexion.Close();
+                            }
+                        }
+
+                        // Escribir el userId
+                        string formItem = $"Content-Disposition: form-data; name=\"userId\"\r\n\r\n{userId}";
+                        memStream.Write(boundarybytes, 0, boundarybytes.Length);
+                        var formItemBytes = System.Text.Encoding.UTF8.GetBytes(formItem + "\r\n");
+                        memStream.Write(formItemBytes, 0, formItemBytes.Length);
+
+                        // Escribir el tipo
+                        formItem = "Content-Disposition: form-data; name=\"tipo\"\r\n\r\nprincipal";
+                        memStream.Write(boundarybytes, 0, boundarybytes.Length);
+                        formItemBytes = System.Text.Encoding.UTF8.GetBytes(formItem + "\r\n");
+                        memStream.Write(formItemBytes, 0, formItemBytes.Length);
+
+                        // Escribir el archivo
+                        string fileHeader = $"Content-Disposition: form-data; name=\"foto\"; filename=\"{fileName}\"\r\nContent-Type: application/octet-stream\r\n\r\n";
+                        memStream.Write(boundarybytes, 0, boundarybytes.Length);
+                        var fileHeaderBytes = System.Text.Encoding.UTF8.GetBytes(fileHeader);
+                        memStream.Write(fileHeaderBytes, 0, fileHeaderBytes.Length);
+
+                        var fileBytes = File.ReadAllBytes(sourceFile);
+                        memStream.Write(fileBytes, 0, fileBytes.Length);
+
+                        memStream.Write(endBoundaryBytes, 0, endBoundaryBytes.Length);
+
+                        client.Headers.Add("Content-Length", memStream.Length.ToString());
+                        byte[] result = client.UploadData(uploadUrl, memStream.ToArray());
+                        string response = System.Text.Encoding.UTF8.GetString(result);
+
+                        // Verificar la respuesta
+                        var jsonResponse = System.Text.Json.JsonDocument.Parse(response);
+                        if (jsonResponse.RootElement.GetProperty("success").GetBoolean())
+                        {
+                            // Obtener la URL de la imagen del servidor
+                            string imageUrl = jsonResponse.RootElement.GetProperty("url").GetString();
+                            rutaFoto = imageUrl; // Actualizar la ruta con la devuelta por el servidor
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error al subir la imagen al servidor", ex);
+                MessageBox.Show($"Error al subir la imagen: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        private void btnCargarFoto_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (OpenFileDialog openFileDialog = new OpenFileDialog())
+                {
+                    openFileDialog.Filter = "Archivos de imagen|*.jpg;*.jpeg;*.png;*.gif;*.bmp";
+                    openFileDialog.Title = "Seleccionar foto de perfil";
+
+                    if (openFileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        string selectedFile = openFileDialog.FileName;
+                        
+                        // Validar el tamaño del archivo (máximo 5MB)
+                        long maxFileSize = 5 * 1024 * 1024; // 5MB en bytes
+                        FileInfo fileInfo = new FileInfo(selectedFile);
+                        
+                        if (fileInfo.Length > maxFileSize)
+                        {
+                            MessageBox.Show("La imagen seleccionada es demasiado grande. El tamaño máximo permitido es 5MB.",
+                                          "Archivo demasiado grande",
+                                          MessageBoxButtons.OK,
+                                          MessageBoxIcon.Warning);
+                            return;
+                        }
+
+                        Image originalImage = null;
+                        try
+                        {
+                            originalImage = Image.FromFile(selectedFile);
+                            
+                            // Validar dimensiones mínimas
+                            if (originalImage.Width < 100 || originalImage.Height < 100)
+                            {
+                                MessageBox.Show("La imagen es demasiado pequeña. Las dimensiones mínimas son 100x100 píxeles.",
+                                              "Imagen demasiado pequeña",
+                                              MessageBoxButtons.OK,
+                                              MessageBoxIcon.Warning);
+                                return;
+                            }
+
+                            // Generar nombre único para la foto
+                            string fileName = $"{DateTime.Now:yyyyMMddHHmmss}{Path.GetExtension(selectedFile)}";
+                            string tempPath = Path.Combine(Path.GetTempPath(), fileName);
+
+                            // Limpiar imagen anterior del PictureBox
+                            if (pictureBoxFoto.Image != null)
+                            {
+                                var oldImage = pictureBoxFoto.Image;
+                                pictureBoxFoto.Image = null;
+                                oldImage.Dispose();
+                            }
+
+                            // Redimensionar la imagen y mostrar previsualización
+                            using (var resizedImage = RedimensionarImagen(originalImage, 800, 800))
+                            {
+                                // Crear una copia de la imagen redimensionada para el PictureBox
+                                pictureBoxFoto.Image = new Bitmap(resizedImage);
+                                
+                                // Guardar temporalmente
+                                resizedImage.Save(tempPath, originalImage.RawFormat);
+                            }
+
+                            // Subir al servidor
+                            if (SubirImagenAlServidor(tempPath, fileName))
+                            {
+                                ActualizarFotoEnBaseDeDatos(rutaFoto);
+                            }
+                            else
+                            {
+                                // Si falla la subida, mostrar error y restaurar estado
+                                MessageBox.Show("Error al subir la imagen al servidor", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                if (pictureBoxFoto.Image != null)
+                                {
+                                    var oldImage = pictureBoxFoto.Image;
+                                    pictureBoxFoto.Image = null;
+                                    oldImage.Dispose();
+                                }
+                            }
+
+                            // Eliminar archivo temporal
+                            if (File.Exists(tempPath))
+                            {
+                                File.Delete(tempPath);
+                            }
+                        }
+                        finally
+                        {
+                            // Asegurar que la imagen original se libere
+                            if (originalImage != null)
+                            {
+                                originalImage.Dispose();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error al cargar la imagen", ex);
+                MessageBox.Show($"Error al cargar la imagen: {ex.Message}",
+                              "Error",
+                              MessageBoxButtons.OK,
+                              MessageBoxIcon.Error);
+            }
+        }
+
+        private void ActualizarFotoEnBaseDeDatos(string rutaFoto)
+        {
+            try
+            {
+                if (conexion.State == ConnectionState.Closed)
+                {
+                    conexion.Open();
+                }
+
+                string consulta = "UPDATE Usuario SET Foto = @foto WHERE User = @usuario";
+                using (MySqlCommand cmd = new MySqlCommand(consulta, conexion))
+                {
+                    cmd.Parameters.AddWithValue("@foto", rutaFoto);
+                    cmd.Parameters.AddWithValue("@usuario", usuarioAutenticado);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al actualizar la foto en la base de datos: {ex.Message}",
+                              "Error",
+                              MessageBoxButtons.OK,
+                              MessageBoxIcon.Error);
+            }
+            finally
+            {
+                if (conexion.State == ConnectionState.Open)
+                {
+                    conexion.Close();
+                }
+            }
+        }
+
+        private Image RedimensionarImagen(Image imgOriginal, int anchoMaximo, int altoMaximo)
+        {
+            try
+            {
+                // Obtener las proporciones de la imagen original
+                double ratioX = (double)anchoMaximo / imgOriginal.Width;
+                double ratioY = (double)altoMaximo / imgOriginal.Height;
+                double ratio = Math.Min(ratioX, ratioY);
+
+                // Calcular las nuevas dimensiones manteniendo la proporción
+                int nuevoAncho = (int)(imgOriginal.Width * ratio);
+                int nuevoAlto = (int)(imgOriginal.Height * ratio);
+
+                // Crear nueva imagen con las dimensiones calculadas
+                var nuevaImagen = new Bitmap(nuevoAncho, nuevoAlto);
+
+                try
+                {
+                    // Copiar y redimensionar la imagen original a la nueva
+                    using (Graphics g = Graphics.FromImage(nuevaImagen))
+                    {
+                        // Configurar la calidad del redimensionamiento
+                        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                        g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                        g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                        g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceOver;
+
+                        // Limpiar el fondo
+                        g.Clear(Color.White);
+
+                        // Dibujar la imagen redimensionada
+                        var destRect = new Rectangle(0, 0, nuevoAncho, nuevoAlto);
+                        var srcRect = new Rectangle(0, 0, imgOriginal.Width, imgOriginal.Height);
+                        g.DrawImage(imgOriginal, destRect, srcRect, GraphicsUnit.Pixel);
+                    }
+
+                    return nuevaImagen;
+                }
+                catch
+                {
+                    nuevaImagen.Dispose();
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al redimensionar la imagen: {ex.Message}", 
+                               "Error", 
+                               MessageBoxButtons.OK, 
+                               MessageBoxIcon.Error);
+                return null;
+            }
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            
+            // Liberar recursos de la imagen
+            if (pictureBoxFoto.Image != null)
+            {
+                pictureBoxFoto.Image.Dispose();
+                pictureBoxFoto.Image = null;
             }
         }
 
@@ -198,6 +533,13 @@ namespace FiltringApp
 
         private void cerrarSesiónToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            // Limpiar recursos de imagen antes de cerrar
+            if (pictureBoxFoto.Image != null)
+            {
+                pictureBoxFoto.Image.Dispose();
+                pictureBoxFoto.Image = null;
+            }
+            
             this.Hide();  // Oculta el formulario actual antes de abrir el LogIn
             LogIn loginForm = new LogIn();
             loginForm.ShowDialog();
@@ -249,38 +591,6 @@ namespace FiltringApp
             }
         }
 
-        private Image RedimensionarImagen(Image imgOriginal, int ancho, int alto)
-        {
-            Bitmap imgRedimensionada = new Bitmap(ancho, alto);
-            using (Graphics g = Graphics.FromImage(imgRedimensionada))
-            {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                g.DrawImage(imgOriginal, 0, 0, ancho, alto);
-            }
-            return imgRedimensionada;
-        }
-
-        private void btnCargarFoto_Click(object sender, EventArgs e)
-        {
-            OpenFileDialog openFileDialog1 = new OpenFileDialog
-            {
-                Filter = "Archivos de imagen|*.jpg;*.jpeg;*.png;*.bmp"
-            };
-
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
-            {
-                rutaFoto = openFileDialog1.FileName;
-
-                // Cargar la imagen y redimensionarla
-                Image imgOriginal = Image.FromFile(rutaFoto);
-                Image imgRedimensionada = RedimensionarImagen(imgOriginal, pictureBoxFoto.Width, pictureBoxFoto.Height);
-
-                // Asignar la imagen redimensionada al PictureBox
-                pictureBoxFoto.Image = imgRedimensionada;
-                pictureBoxFoto.SizeMode = PictureBoxSizeMode.StretchImage;
-            }
-        }
-
         private void verUsuariosToolStripMenuItem_Click(object sender, EventArgs e)
         {
             int idUsuario = ObtenerIdUsuario(usuarioAutenticado);
@@ -297,149 +607,105 @@ namespace FiltringApp
 
         private void btnEliminarUsuario_Click(object sender, EventArgs e)
         {
-            // Mostrar mensaje de confirmación
-            DialogResult result = MessageBox.Show(
-                "¿Está seguro que desea eliminar su cuenta? Esta acción no se puede deshacer y se eliminarán todos sus datos.",
-                "Confirmar eliminación de cuenta",
+            DialogResult confirmacion = MessageBox.Show(
+                "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.",
+                "Confirmar eliminación",
                 MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
+                MessageBoxIcon.Warning
+            );
 
-            if (result == DialogResult.Yes)
+            if (confirmacion == DialogResult.Yes)
             {
                 EliminarCuentaUsuario();
             }
         }
+
         private void EliminarCuentaUsuario()
         {
-            MySqlTransaction transaction = null;
             try
             {
-                // Obtener el ID del usuario antes de iniciar la transacción
-                int idUsuario = ObtenerIdUsuarioSinCerrarConexion();
-
-                if (idUsuario == -1)
-                {
-                    MessageBox.Show("No se pudo obtener el ID del usuario.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                // Asegurar que la conexión está abierta
                 if (conexion.State == ConnectionState.Closed)
                 {
                     conexion.Open();
                 }
 
-                // Iniciar la transacción
-                transaction = conexion.BeginTransaction();
+                // Obtener el ID del usuario
+                int idUsuario = ObtenerIdUsuarioSinCerrarConexion();
+                if (idUsuario == -1)
+                {
+                    throw new Exception("No se pudo obtener el ID del usuario");
+                }
 
-                // 1. Eliminar mensajes recibidos por el usuario (usando el nombre correcto de columna: ID_Receptor)
-                string eliminarMensajesRecibidos = "DELETE FROM Mensaje WHERE ID_Receptor = @idUsuario";
-                MySqlCommand cmdMensajesRecibidos = new MySqlCommand(eliminarMensajesRecibidos, conexion, transaction);
-                cmdMensajesRecibidos.Parameters.AddWithValue("@idUsuario", idUsuario);
-                cmdMensajesRecibidos.ExecuteNonQuery();
+                // Iniciar transacción
+                MySqlTransaction transaction = conexion.BeginTransaction();
 
-                // 2. Eliminar mensajes enviados por el usuario (usando el nombre correcto de columna: ID_Emisor)
-                string eliminarMensajesEnviados = "DELETE FROM Mensaje WHERE ID_Emisor = @idUsuario";
-                MySqlCommand cmdMensajesEnviados = new MySqlCommand(eliminarMensajesEnviados, conexion, transaction);
-                cmdMensajesEnviados.Parameters.AddWithValue("@idUsuario", idUsuario);
-                cmdMensajesEnviados.ExecuteNonQuery();
+                try
+                {
+                    // Eliminar registros relacionados en otras tablas
+                    string[] deleteQueries = {
+                        "DELETE FROM Matches WHERE UsuarioID1 = @userId OR UsuarioID2 = @userId",
+                        "DELETE FROM Mensajes WHERE EmisorID = @userId OR ReceptorID = @userId",
+                        "DELETE FROM MatchesPendientes WHERE UsuarioSolicitanteID = @userId OR UsuarioSolicitadoID = @userId",
+                        "DELETE FROM Usuario WHERE ID = @userId"
+                    };
 
-                // 3. Eliminar matches pendientes y confirmados
-                // Nota: En tu esquema la tabla se llama "Matches" no "Match"
-                string eliminarMatches = "DELETE FROM Matches WHERE ID_Acept = @idUsuario OR ID_Sol = @idUsuario";
-                MySqlCommand cmdMatches = new MySqlCommand(eliminarMatches, conexion, transaction);
-                cmdMatches.Parameters.AddWithValue("@idUsuario", idUsuario);
-                cmdMatches.ExecuteNonQuery();
+                    foreach (string query in deleteQueries)
+                    {
+                        using (MySqlCommand cmd = new MySqlCommand(query, conexion, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@userId", idUsuario);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
 
-                // 4. Eliminar el perfil del usuario si existe
-                string eliminarPerfil = "DELETE FROM Perfil WHERE ID_User = @idUsuario";
-                MySqlCommand cmdPerfil = new MySqlCommand(eliminarPerfil, conexion, transaction);
-                cmdPerfil.Parameters.AddWithValue("@idUsuario", idUsuario);
-                cmdPerfil.ExecuteNonQuery();
+                    // Confirmar transacción
+                    transaction.Commit();
 
-                // 5. Finalmente, eliminar el usuario
-                string eliminarUsuario = "DELETE FROM Usuario WHERE ID = @idUsuario";
-                MySqlCommand cmdUsuario = new MySqlCommand(eliminarUsuario, conexion, transaction);
-                cmdUsuario.Parameters.AddWithValue("@idUsuario", idUsuario);
-                cmdUsuario.ExecuteNonQuery();
+                    MessageBox.Show("Cuenta eliminada correctamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                // Confirmar la transacción
-                transaction.Commit();
-
-                MessageBox.Show("Cuenta eliminada correctamente. La aplicación se cerrará ahora.",
-                    "Cuenta eliminada", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                // Cerrar la aplicación y volver al formulario de login
-                this.Hide();
-                LogIn loginForm = new LogIn();
-                loginForm.ShowDialog();
-                this.Close();
+                    // Cerrar el formulario actual y abrir el formulario de inicio de sesión
+                    this.Hide();
+                    LogIn loginForm = new LogIn();
+                    loginForm.ShowDialog();
+                    this.Close();
+                }
+                catch (Exception ex)
+                {
+                    // Revertir transacción en caso de error
+                    transaction.Rollback();
+                    throw new Exception("Error al eliminar la cuenta: " + ex.Message);
+                }
             }
             catch (Exception ex)
             {
-                // Solo intentar hacer rollback si la transacción existe y la conexión está abierta
-                if (transaction != null && conexion != null && conexion.State == ConnectionState.Open)
-                {
-                    try
-                    {
-                        transaction.Rollback();
-                    }
-                    catch
-                    {
-                        // Ignorar errores durante el rollback
-                    }
-                }
-
-                MessageBox.Show("Error al eliminar la cuenta: " + ex.Message,
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
-                if (conexion != null && conexion.State == ConnectionState.Open)
+                if (conexion.State == ConnectionState.Open)
                 {
                     conexion.Close();
                 }
             }
         }
 
-        // Método para obtener el ID del usuario sin cerrar la conexión
         private int ObtenerIdUsuarioSinCerrarConexion()
         {
-            int idUsuario = -1;
-            bool conexionEstabaCerrada = (conexion.State == ConnectionState.Closed);
-
             try
             {
-                if (conexionEstabaCerrada)
-                {
-                    conexion.Open();
-                }
-
                 string consulta = "SELECT ID FROM Usuario WHERE User = @usuario";
-                MySqlCommand cmd = new MySqlCommand(consulta, conexion);
-                cmd.Parameters.AddWithValue("@usuario", usuarioAutenticado);
-                object resultado = cmd.ExecuteScalar();
-
-                if (resultado != null)
+                using (MySqlCommand cmd = new MySqlCommand(consulta, conexion))
                 {
-                    idUsuario = Convert.ToInt32(resultado);
+                    cmd.Parameters.AddWithValue("@usuario", usuarioAutenticado);
+                    object resultado = cmd.ExecuteScalar();
+                    return resultado != null ? Convert.ToInt32(resultado) : -1;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al obtener el ID del usuario: " + ex.Message,
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-                // Si hubo una excepción y nosotros abrimos la conexión, la cerramos
-                if (conexionEstabaCerrada && conexion.State == ConnectionState.Open)
-                {
-                    conexion.Close();
-                }
+                MessageBox.Show("Error al obtener el ID del usuario: " + ex.Message);
+                return -1;
             }
-
-            // Importante: NO cerramos la conexión aquí para mantenerla abierta para la transacción
-
-            return idUsuario;
         }
 
         private void verEstadisticasToolStripMenuItem_Click(object sender, EventArgs e)
@@ -467,5 +733,48 @@ namespace FiltringApp
             }
         }
 
+        private void LogError(string message, Exception ex)
+        {
+            string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message} - {ex.Message}";
+            Debug.WriteLine(logMessage);
+            
+            try
+            {
+                string logPath = Path.Combine(Application.StartupPath, "app_log.txt");
+                File.AppendAllText(logPath, logMessage + Environment.NewLine);
+            }
+            catch
+            {
+                // Si falla el logging a archivo, al menos tenemos el Debug.WriteLine
+            }
+        }
+
+        private Image CargarImagenDesdeUrl(string relativePath)
+        {
+            if (string.IsNullOrEmpty(relativePath)) return null;
+
+            try
+            {
+                string fullUrl = BASE_URL + relativePath;
+                using (WebClient webClient = new WebClient())
+                {
+                    byte[] data = webClient.DownloadData(fullUrl);
+                    using (MemoryStream mem = new MemoryStream(data))
+                    {
+                        return Image.FromStream(mem);
+                    }
+                }
+            }
+            catch (WebException webEx)
+            {
+                LogError($"Error de red al cargar la imagen desde {relativePath}", webEx);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error al cargar la imagen desde {relativePath}", ex);
+                return null;
+            }
+        }
     }
 }

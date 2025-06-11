@@ -41,42 +41,47 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(320, 93);
+            label1.Font = new Font("Segoe UI", 16F, FontStyle.Regular, GraphicsUnit.Point);
+            label1.Location = new Point(320, 50);
             label1.Name = "label1";
-            label1.Size = new Size(78, 15);
+            label1.Size = new Size(138, 30);
             label1.TabIndex = 0;
-            label1.Text = "Bienvenido a ";
+            label1.Text = "Bienvenido a";
             // 
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(336, 131);
+            label2.Font = new Font("Segoe UI", 16F, FontStyle.Regular, GraphicsUnit.Point);
+            label2.ForeColor = Color.FromArgb(102, 126, 234);
+            label2.Location = new Point(345, 80);
             label2.Name = "label2";
-            label2.Size = new Size(46, 15);
+            label2.Size = new Size(81, 30);
             label2.TabIndex = 1;
             label2.Text = "Affinity";
-            label2.Click += label2_Click;
             // 
             // txtUser
             // 
+            txtUser.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
             txtUser.Location = new Point(251, 171);
             txtUser.Name = "txtUser";
-            txtUser.Size = new Size(228, 23);
+            txtUser.Size = new Size(300, 25);
             txtUser.TabIndex = 2;
             // 
             // txtPwd
             // 
+            txtPwd.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
             txtPwd.Location = new Point(251, 227);
             txtPwd.Name = "txtPwd";
-            txtPwd.PasswordChar = '*';
-            txtPwd.Size = new Size(228, 23);
+            txtPwd.PasswordChar = '•';
+            txtPwd.Size = new Size(300, 25);
             txtPwd.TabIndex = 3;
             // 
             // btnLogIn
             // 
+            btnLogIn.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point);
             btnLogIn.Location = new Point(299, 272);
             btnLogIn.Name = "btnLogIn";
-            btnLogIn.Size = new Size(129, 47);
+            btnLogIn.Size = new Size(200, 47);
             btnLogIn.TabIndex = 4;
             btnLogIn.Text = "Iniciar Sesión";
             btnLogIn.UseVisualStyleBackColor = true;
@@ -84,29 +89,32 @@
             // 
             // btnRegistro
             // 
-            btnRegistro.Location = new Point(549, 272);
+            btnRegistro.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+            btnRegistro.Location = new Point(299, 332);
             btnRegistro.Name = "btnRegistro";
-            btnRegistro.Size = new Size(129, 47);
+            btnRegistro.Size = new Size(200, 47);
             btnRegistro.TabIndex = 5;
-            btnRegistro.Text = "¿No tiene cuenta? ¡Regístrese!";
+            btnRegistro.Text = "¿No tienes cuenta? ¡Regístrate!";
             btnRegistro.UseVisualStyleBackColor = true;
             btnRegistro.Click += btnRegistro_Click;
             // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(177, 174);
+            label3.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+            label3.Location = new Point(251, 151);
             label3.Name = "label3";
-            label3.Size = new Size(50, 15);
+            label3.Size = new Size(59, 19);
             label3.TabIndex = 6;
             label3.Text = "Usuario:";
             // 
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(177, 230);
+            label4.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+            label4.Location = new Point(251, 207);
             label4.Name = "label4";
-            label4.Size = new Size(70, 15);
+            label4.Size = new Size(82, 19);
             label4.TabIndex = 7;
             label4.Text = "Contraseña:";
             // 
@@ -123,11 +131,13 @@
             Controls.Add(txtUser);
             Controls.Add(label2);
             Controls.Add(label1);
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false;
             Name = "LogIn";
-            Text = "Form1";
+            StartPosition = FormStartPosition.CenterScreen;
+            Text = "Affinity - Iniciar Sesión";
             ResumeLayout(false);
             PerformLayout();
-
         }
 
         #endregion

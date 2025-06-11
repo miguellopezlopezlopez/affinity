@@ -1,6 +1,6 @@
 using System;
 using System.Windows.Forms;
-using FiltringApp; // Asegura que este using está presente
+using FiltringApp; // Asegura que este using estï¿½ presente
 
 namespace FiltringApp
 {
@@ -10,7 +10,7 @@ namespace FiltringApp
         static void Main()
         {
             ApplicationConfiguration.Initialize();
-            Application.Run(new LogIn()); // Asegúrate de que el nombre coincida con la clase en LogIn.cs
+            Application.Run(new LogIn()); // Asegï¿½rate de que el nombre coincida con la clase en LogIn.cs
         }
     }
 }

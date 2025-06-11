@@ -7,6 +7,8 @@ using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace FiltringApp
 {
@@ -85,6 +87,16 @@ namespace FiltringApp
             }
         }
 
+        private string HashPassword(string password)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(password);
+                byte[] hash = sha256.ComputeHash(bytes);
+                return BitConverter.ToString(hash).Replace("-", "").ToLower();
+            }
+        }
+
         private async void btnLogIn_Click(object sender, EventArgs e)
         {
             string usuario = txtUser.Text.Trim();
@@ -103,10 +115,11 @@ namespace FiltringApp
                     conexion.Open();
                 }
 
+                string hashedPassword = HashPassword(contrasea);
                 string consulta = "SELECT ID, User FROM Usuario WHERE User = @usuario AND Password = @contrasea";
                 MySqlCommand cmd = new MySqlCommand(consulta, conexion);
                 cmd.Parameters.AddWithValue("@usuario", usuario);
-                cmd.Parameters.AddWithValue("@contrasea", contrasea);
+                cmd.Parameters.AddWithValue("@contrasea", hashedPassword);
                 MySqlDataReader resultado = cmd.ExecuteReader();
 
                 if (resultado.HasRows)

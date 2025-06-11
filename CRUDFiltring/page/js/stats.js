@@ -56,16 +56,30 @@ function showError(message) {
 }
 
 // Función para actualizar el avatar del usuario
-function updateUserAvatar(nombre) {
+function updateUserAvatar(nombre, fotoPrincipal) {
     const avatar = document.getElementById('userAvatar');
-    const colors = [
-        '#3498db', '#e74c3c', '#2ecc71', '#f1c40f', 
-        '#9b59b6', '#1abc9c', '#e67e22', '#34495e'
-    ];
-    const colorIndex = nombre.charCodeAt(0) % colors.length;
+    const avatarImg = document.getElementById('userAvatarImg');
+    const avatarInitial = document.getElementById('userAvatarInitial');
     
-    avatar.style.background = `linear-gradient(135deg, ${colors[colorIndex]}, ${colors[(colorIndex + 1) % colors.length]})`;
-    avatar.textContent = nombre.charAt(0);
+    if (fotoPrincipal) {
+        // Si hay foto, mostrarla
+        avatarImg.src = fotoPrincipal;
+        avatarImg.style.display = 'block';
+        avatarInitial.style.display = 'none';
+        avatar.style.background = 'none';
+    } else {
+        // Si no hay foto, mostrar inicial con color de fondo
+        avatarImg.style.display = 'none';
+        avatarInitial.style.display = 'flex';
+        avatarInitial.textContent = nombre.charAt(0);
+        
+        const colors = [
+            '#3498db', '#e74c3c', '#2ecc71', '#f1c40f', 
+            '#9b59b6', '#1abc9c', '#e67e22', '#34495e'
+        ];
+        const colorIndex = nombre.charCodeAt(0) % colors.length;
+        avatar.style.background = `linear-gradient(135deg, ${colors[colorIndex]}, ${colors[(colorIndex + 1) % colors.length]})`;
+    }
 }
 
 // Función para verificar la sesión
@@ -114,8 +128,10 @@ async function loadStats() {
         return;
     }
 
-    // Mostrar el contenedor de estadísticas
-    document.querySelector('.stats-container').style.display = 'block';
+    // Mostrar el contenedor de estadísticas con estado de carga
+    const statsContainer = document.querySelector('.stats-container');
+    statsContainer.style.display = 'block';
+    statsContainer.classList.add('loading');
 
     try {
         const response = await fetch(`api/stats.php?userId=${userId}`, {
@@ -142,21 +158,25 @@ async function loadStats() {
 
         if (data.success) {
             const usuario = data.data.usuario;
-            document.getElementById('userName').textContent = `${usuario.Nombre} ${usuario.Apellido}`;
-            document.getElementById('userDetails').textContent = `@${usuario.User} | ${usuario.Genero}`;
-            updateUserAvatar(usuario.Nombre);
+            if (usuario) {
+                document.getElementById('userName').textContent = `${usuario.Nombre} ${usuario.Apellido}`;
+                document.getElementById('userDetails').textContent = `@${usuario.User} | ${usuario.Genero}`;
+                updateUserAvatar(usuario.Nombre, usuario.FotoPrincipal);
+            }
 
             const stats = {
-                'totalMatches': data.data.total_matches,
-                'activeMatches': data.data.matches_activos,
-                'sentMessages': data.data.mensajes_enviados,
-                'receivedMessages': data.data.mensajes_recibidos
+                'totalMatches': data.data.total_matches || 0,
+                'activeMatches': data.data.matches_activos || 0,
+                'sentMessages': data.data.mensajes_enviados || 0,
+                'receivedMessages': data.data.mensajes_recibidos || 0
             };
 
             Object.entries(stats).forEach(([id, value], index) => {
                 setTimeout(() => {
                     const element = document.getElementById(id);
-                    animateValue(element, 0, value, 1500);
+                    if (element) {
+                        animateValue(element, 0, value, 1500);
+                    }
                 }, index * 200);
             });
         } else {
@@ -165,8 +185,34 @@ async function loadStats() {
     } catch (error) {
         console.error('Error:', error);
         showError('Error al cargar las estadísticas');
+    } finally {
+        // Remover el estado de carga
+        statsContainer.classList.remove('loading');
+    }
+}
+
+// Función para cerrar sesión
+async function logout() {
+    try {
+        const response = await fetch('./api/logout.php', {
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            throw new Error('Error al cerrar sesión');
+        }
+    } catch (error) {
+        console.error('Error during logout:', error);
+    } finally {
+        // Redirigir al login independientemente del resultado
+        window.location.href = 'login.html';
     }
 }
 
 // Iniciar la carga cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', loadStats); 
+document.addEventListener('DOMContentLoaded', () => {
+    const logoutButton = document.getElementById('logout');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', logout);
+    }
+    loadStats();
+}); 

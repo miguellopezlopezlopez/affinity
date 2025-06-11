@@ -50,7 +50,7 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.dataGridViewMensajes);
             this.Name = "ReceivedMessagesForm";
-            this.Text = "Mensajes Recibidos";
+            this.Text = "Affinity - Mensajes Recibidos";
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMensajes)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

@@ -29,38 +29,52 @@
         private void InitializeComponent()
         {
             dataGridViewUsuarios = new DataGridView();
-            label1 = new Label();
+            btnRefrescar = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridViewUsuarios).BeginInit();
             SuspendLayout();
-            // 
-            // dataGridViewUsuarios
-            // 
-            dataGridViewUsuarios.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewUsuarios.Location = new Point(76, 12);
-            dataGridViewUsuarios.Name = "dataGridViewUsuarios";
-            dataGridViewUsuarios.RowTemplate.Height = 25;
-            dataGridViewUsuarios.Size = new Size(620, 312);
-            dataGridViewUsuarios.TabIndex = 0;
+
+            // Configuración del formulario
+            FormStyles.ApplyFormStyle(this);
+            this.ClientSize = new Size(1000, 600);
+            this.Padding = new Padding(20);
+
+            // Título
+            Label titleLabel = new Label
+            {
+                Text = "Usuarios",
+                Dock = DockStyle.Top,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Height = 40
+            };
+            FormStyles.ApplyLabelStyle(titleLabel, true);
+
+            // DataGridView
+            FormStyles.ApplyDataGridViewStyle(dataGridViewUsuarios);
+            dataGridViewUsuarios.Dock = DockStyle.Fill;
+            dataGridViewUsuarios.Margin = new Padding(0, 20, 0, 20);
             dataGridViewUsuarios.CellDoubleClick += dataGridViewUsuarios_CellDoubleClick;
-            // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.Location = new Point(208, 358);
-            label1.Name = "label1";
-            label1.Size = new Size(341, 15);
-            label1.TabIndex = 1;
-            label1.Text = "Haga doble clic en el usuario al que le quiera enviar un mensaje";
-            // 
-            // MatchesForm
-            // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
-            Controls.Add(label1);
+
+            // Panel de botones
+            Panel buttonPanel = new Panel
+            {
+                Height = 60,
+                Dock = DockStyle.Bottom,
+                Padding = new Padding(0, 10, 0, 10)
+            };
+
+            // Botón refrescar
+            FormStyles.ApplyMainButtonStyle(btnRefrescar);
+            btnRefrescar.Text = "Refrescar";
+            btnRefrescar.Width = 150;
+            btnRefrescar.Location = new Point(buttonPanel.Width / 2 - 75, 10);
+
+            // Agregar controles
+            buttonPanel.Controls.Add(btnRefrescar);
+
+            Controls.Add(buttonPanel);
             Controls.Add(dataGridViewUsuarios);
-            Name = "MatchesForm";
-            Text = "MatchesForm";
+            Controls.Add(titleLabel);
+
             ((System.ComponentModel.ISupportInitialize)dataGridViewUsuarios).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -69,6 +83,6 @@
         #endregion
 
         private DataGridView dataGridViewUsuarios;
-        private Label label1;
+        private Button btnRefrescar;
     }
 }

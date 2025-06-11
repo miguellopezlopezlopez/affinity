@@ -4,44 +4,164 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estadísticas de Usuario - Affinity</title>
+    <link rel="stylesheet" href="css/profile.css">
     <link rel="stylesheet" href="css/stats.css">
     <link rel="icon" type="image/png" href="img/favicon.png">
+    <style>
+        .loading {
+            opacity: 0.5;
+            position: relative;
+        }
+        .loading::after {
+            content: "Cargando...";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .stats-container {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <div class="stats-container" style="display: none;">
-        <div class="stats-header">
-            <div class="user-avatar" id="userAvatar">
-                <!-- Se llenará con JavaScript -->
-            </div>
-            <div class="user-info">
-                <h1 id="userName">Cargando...</h1>
-                <p id="userDetails">...</p>
-            </div>
-        </div>
+<script>
+// Verificar autenticación antes de cargar la página
+async function checkAuth() {
+    try {
+        // FIXED: Usar URLs dinámicas como en login.js
+        const checkUrls = [
+            `${window.location.protocol}//${window.location.hostname}/page/api/check_session.php`,
+            `${window.location.protocol}//${window.location.hostname}/api/check_session.php`,
+            './api/check_session.php',
+            'api/check_session.php'
+        ];
+        
+        console.log('Verificando autenticación con URLs:', checkUrls);
+        
+        for (const url of checkUrls) {
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Respuesta de verificación:', data);
+                    
+                    if (!data.authenticated) {
+                        // No hay sesión activa, redirigir al login
+                        console.log('Usuario no autenticado, redirigiendo...');
+                        sessionStorage.setItem('redirectAfterLogin', window.location.href);
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    
+                    // Usuario autenticado, continuar cargando la página
+                    console.log('Usuario autenticado:', data.user);
+                    
+                    // Opcional: actualizar sessionStorage con datos de la sesión
+                    sessionStorage.setItem('userId', data.user.id);
+                    sessionStorage.setItem('username', data.user.username);
+                    sessionStorage.setItem('userEmail', data.user.email);
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    
+                    return; // Salir del bucle, verificación exitosa
+                }
+            } catch (err) {
+                console.log(`Error con URL ${url}:`, err.message);
+                continue; // Probar siguiente URL
+            }
+        }
+        
+        // Si ninguna URL funcionó, redirigir por seguridad
+        console.log('No se pudo verificar la sesión, redirigiendo al login');
+        sessionStorage.setItem('redirectAfterLogin', window.location.href);
+        window.location.href = 'login.html';
+        
+    } catch (error) {
+        console.error('Error verificando autenticación:', error);
+        // En caso de error, redirigir al login por seguridad
+        sessionStorage.setItem('redirectAfterLogin', window.location.href);
+        window.location.href = 'login.html';
+    }
+}
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">💘</div>
-                <div class="stat-value" id="totalMatches">0</div>
-                <div class="stat-label">Total de Matches</div>
+// Ejecutar verificación inmediatamente
+checkAuth();
+</script>
+
+    <div class="container">
+        <nav class="navbar">
+            <a href="index.html" class="nav-brand">Affinity<span>.</span></a>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Inicio</a>
+                <a href="profile.html" class="nav-link">Mi Perfil</a>
+                <a href="stats.html" class="nav-link active">Estadísticas</a>
+                <a href="#" class="nav-link" id="logout">Cerrar Sesión</a>
             </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">❤️</div>
-                <div class="stat-value" id="activeMatches">0</div>
-                <div class="stat-label">Matches Activos</div>
+        </nav>
+
+        <div class="profile-container stats-container">
+            <div class="profile-header stats-header">
+                <div class="user-avatar" id="userAvatar">
+                    <img id="userAvatarImg" src="" alt="" style="display: none;">
+                    <span id="userAvatarInitial"></span>
+                </div>
+                <div class="profile-info user-info">
+                    <h1 id="userName">Cargando...</h1>
+                    <p id="userDetails">Cargando...</p>
+                </div>
             </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">📤</div>
-                <div class="stat-value" id="sentMessages">0</div>
-                <div class="stat-label">Mensajes Enviados</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">📥</div>
-                <div class="stat-value" id="receivedMessages">0</div>
-                <div class="stat-label">Mensajes Recibidos</div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div class="stat-value" id="totalMatches">0</div>
+                    <div class="stat-label">Total de Matches</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div class="stat-value" id="activeMatches">0</div>
+                    <div class="stat-label">Matches Activos</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div class="stat-value" id="sentMessages">0</div>
+                    <div class="stat-label">Mensajes Enviados</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div class="stat-value" id="receivedMessages">0</div>
+                    <div class="stat-label">Mensajes Recibidos</div>
+                </div>
             </div>
         </div>
     </div>

@@ -17,6 +17,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Inicializar Google Places Autocomplete
+    const locationInput = document.getElementById('location');
+    if (locationInput) {
+        /* Comentando temporalmente la funcionalidad de Google Places
+        const autocomplete = new google.maps.places.Autocomplete(locationInput, {
+            types: ['(cities)'], // Restringir a solo ciudades
+            fields: ['formatted_address', 'geometry']
+        });
+
+        // Manejar la selección de lugar
+        autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            if (!place.geometry) {
+                showError('location', 'Por favor, selecciona una ubicación válida de la lista');
+                return;
+            }
+            // La ubicación es válida
+            locationInput.dataset.lat = place.geometry.location.lat();
+            locationInput.dataset.lng = place.geometry.location.lng();
+            clearError('location');
+        });
+        */
+
+        // Prevenir envío del formulario al presionar enter en el campo de ubicación
+        locationInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+            }
+        });
+    }
+
     // Google Sign In handler
     const googleButton = document.querySelector('.google-sign-in');
     if (googleButton) {
@@ -31,40 +62,70 @@ document.addEventListener('DOMContentLoaded', function() {
     const photoInput = document.getElementById('profilePhoto');
     const photoPreview = document.getElementById('photoPreview');
     const photoContainer = document.querySelector('.photo-preview-container');
+    const removePhotoBtn = document.getElementById('removePhoto');
+    const photoError = document.querySelector('.photo-error');
 
     if (photoInput && photoPreview) {
+        // Función para mostrar error de foto
+        function showPhotoError(message) {
+            photoError.textContent = message;
+            photoError.style.display = 'block';
+            setTimeout(() => {
+                photoError.style.display = 'none';
+            }, 3000);
+        }
+
+        // Función para resetear la foto
+        function resetPhoto() {
+            photoInput.value = '';
+            photoPreview.style.display = 'none';
+            photoPreview.src = '#';
+            photoContainer.classList.remove('has-image');
+            removePhotoBtn.style.display = 'none';
+            photoError.style.display = 'none';
+        }
+
+        // Evento para eliminar la foto
+        removePhotoBtn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Evitar que se abra el selector de archivo
+            resetPhoto();
+        });
+
         photoInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                if (file.size > 5 * 1024 * 1024) { // 5MB máximo
-                    alert('La imagen es demasiado grande. Por favor, selecciona una imagen menor a 5MB.');
+                // Validar tipo de archivo
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    showPhotoError('Por favor, selecciona una imagen en formato JPG, PNG o GIF.');
+                    resetPhoto();
+                    return;
+                }
+
+                // Validar tamaño (5MB máximo)
+                if (file.size > 5 * 1024 * 1024) {
+                    showPhotoError('La imagen es demasiado grande. Por favor, selecciona una imagen menor a 5MB.');
+                    resetPhoto();
                     return;
                 }
 
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    photoPreview.style.display = 'block';
                     photoPreview.src = e.target.result;
                     photoContainer.classList.add('has-image');
+                    removePhotoBtn.style.display = 'block';
                 };
                 reader.onerror = function() {
-                    alert('Error al leer la imagen. Por favor, intenta con otra imagen.');
+                    showPhotoError('Error al leer la imagen. Por favor, intenta con otra imagen.');
+                    resetPhoto();
                 };
                 reader.readAsDataURL(file);
             }
         });
 
-        // Inicializar con imagen por defecto
-        photoPreview.src = '#';
-        photoPreview.onerror = function() {
-            this.style.display = 'none';
-            photoContainer.classList.remove('has-image');
-        };
-        photoPreview.onload = function() {
-            if (this.src !== '#') {
-                this.style.display = 'block';
-                photoContainer.classList.add('has-image');
-            }
-        };
+        // Inicializar estado de la imagen
+        resetPhoto();
     }
 });
 
@@ -138,6 +199,7 @@ async function simulateRegister() {
     const termsCheck = document.getElementById('termsCheck').checked;
     const gender = document.querySelector('input[name="gender"]:checked')?.value;
     const photoFile = document.getElementById('profilePhoto').files[0];
+    const location = document.getElementById('location').value;
     
     // Validar formulario
     let hasErrors = false;
@@ -188,6 +250,11 @@ async function simulateRegister() {
         showGeneralError('Por favor, selecciona tu género');
         hasErrors = true;
     }
+
+    if (!location.trim()) {
+        showError('location', 'Por favor, ingresa tu ubicación');
+        hasErrors = true;
+    }
     
     if (!termsCheck) {
         showGeneralError('Debes aceptar los términos y condiciones para continuar');
@@ -198,65 +265,56 @@ async function simulateRegister() {
         return;
     }
 
-    let photoBase64 = null;
-    if (photoFile) {
-        try {
-            photoBase64 = await getBase64Image(photoFile);
-        } catch (error) {
-            console.error('Error al procesar la imagen:', error);
-            showGeneralError('Error al procesar la imagen. Por favor, intenta con otra imagen.');
-            return;
-        }
-    }
-    
-    // Preparar datos para enviar al servidor
-    const userData = {
-        user: username,
-        password: password,
-        nombre: firstName,
-        apellido: lastName,
-        genero: gender === 'male' ? 'Masculino' : (gender === 'female' ? 'Femenino' : 'Otro'),
-        email: email,
-        ubicacion: '',
-        foto: photoBase64
-    };
-
-    // Deshabilitar el botón mientras se procesa
-    const registerButton = document.querySelector('.register-button');
-    registerButton.innerHTML = 'Procesando...';
-    registerButton.disabled = true;
-
     try {
-        const response = await fetch('http://localhost/page/register.php', {
+        // Registrar usuario
+        const registerResponse = await fetch('./api/register.php', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(userData)
+            body: JSON.stringify({
+                user: username,
+                password: password,
+                nombre: firstName,
+                apellido: lastName,
+                genero: gender === 'male' ? 'Masculino' : (gender === 'female' ? 'Femenino' : 'Otro'),
+                email: email,
+                ubicacion: location
+            })
         });
 
-        if (!response.ok) {
-            throw new Error('Error en el registro');
+        const registerData = await registerResponse.json();
+
+        if (!registerData.success) {
+            throw new Error(registerData.message || 'Error en el registro');
         }
 
-        const data = await response.json();
-        
-        if (data.success) {
-            form.classList.remove('form-submitted');
-            showSuccessMessage('¡Registro exitoso! Redirigiendo...');
-            setTimeout(() => {
-                window.location.href = 'http://localhost:8080/login';
-            }, 2000);
-        } else {
-            showGeneralError(data.message || 'Error en el registro. Por favor, intenta de nuevo.');
+        // Si hay una foto seleccionada, subirla
+        if (photoFile) {
+            const formData = new FormData();
+            formData.append('foto', photoFile);
+            formData.append('tipo', 'principal');
+            formData.append('userId', registerData.userId);
+
+            const photoResponse = await fetch('./api/upload_photo.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const photoData = await photoResponse.json();
+            if (!photoData.success) {
+                console.error('Error al subir la foto:', photoData.message);
+            }
         }
+
+        showSuccessMessage('¡Registro exitoso! Redirigiendo al inicio de sesión...');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 2000);
+
     } catch (error) {
         console.error('Error:', error);
-        showGeneralError('Error en el registro. Por favor, intenta de nuevo más tarde.');
-    } finally {
-        registerButton.innerHTML = 'Crear cuenta';
-        registerButton.disabled = false;
+        showGeneralError('Error en el registro: ' + error.message);
     }
 }
 
@@ -314,4 +372,16 @@ function initTestimonials() {
 }
 
 // Inicializar los testimoniales cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', initTestimonials); 
+document.addEventListener('DOMContentLoaded', initTestimonials);
+
+// Función para limpiar un error específico
+function clearError(field) {
+    const formGroup = document.getElementById(field).closest('.form-group');
+    if (formGroup) {
+        formGroup.classList.remove('has-error');
+        const errorText = formGroup.querySelector('.error-text');
+        if (errorText) {
+            errorText.textContent = '';
+        }
+    }
+} 

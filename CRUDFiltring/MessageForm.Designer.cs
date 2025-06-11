@@ -31,45 +31,82 @@
             lblReceptor = new Label();
             txtMensaje = new TextBox();
             btnEnviar = new Button();
+            txtMensajes = new TextBox();
+            lblEstado = new Label();
+            panelMensajes = new Panel();
+            panelInferior = new Panel();
             SuspendLayout();
-            // 
-            // lblReceptor
-            // 
-            lblReceptor.AutoSize = true;
-            lblReceptor.Location = new Point(101, 143);
-            lblReceptor.Name = "lblReceptor";
-            lblReceptor.Size = new Size(38, 15);
-            lblReceptor.TabIndex = 0;
-            lblReceptor.Text = "label1";
-            // 
-            // txtMensaje
-            // 
-            txtMensaje.Location = new Point(284, 31);
+
+            // Configuración del formulario
+            FormStyles.ApplyFormStyle(this);
+            this.ClientSize = new Size(800, 600);
+            this.MinimumSize = new Size(600, 400);
+
+            // Panel de mensajes
+            panelMensajes.AutoScroll = true;
+            panelMensajes.BackColor = FormStyles.WhiteColor;
+            panelMensajes.BorderStyle = BorderStyle.FixedSingle;
+            panelMensajes.Dock = DockStyle.Fill;
+            panelMensajes.Padding = new Padding(10);
+
+            // TextBox de mensajes
+            txtMensajes.Dock = DockStyle.Fill;
+            txtMensajes.Multiline = true;
+            txtMensajes.ReadOnly = true;
+            txtMensajes.ScrollBars = ScrollBars.Vertical;
+            txtMensajes.BackColor = FormStyles.WhiteColor;
+            txtMensajes.BorderStyle = BorderStyle.None;
+            txtMensajes.Font = FormStyles.RegularFont;
+            txtMensajes.ForeColor = FormStyles.DarkColor;
+            txtMensajes.Margin = new Padding(10);
+            panelMensajes.Controls.Add(txtMensajes);
+
+            // Panel inferior
+            panelInferior.Height = 100;
+            panelInferior.Dock = DockStyle.Bottom;
+            panelInferior.BackColor = FormStyles.LightColor;
+            panelInferior.Padding = new Padding(10);
+
+            // Label receptor
+            FormStyles.ApplyLabelStyle(lblReceptor, true);
+            lblReceptor.Dock = DockStyle.Top;
+            lblReceptor.TextAlign = ContentAlignment.MiddleCenter;
+            lblReceptor.BackColor = FormStyles.PrimaryColor;
+            lblReceptor.ForeColor = FormStyles.WhiteColor;
+            lblReceptor.Padding = new Padding(10);
+            lblReceptor.Height = 50;
+
+            // TextBox mensaje
+            FormStyles.ApplyTextBoxStyle(txtMensaje);
             txtMensaje.Multiline = true;
-            txtMensaje.Name = "txtMensaje";
-            txtMensaje.Size = new Size(430, 216);
-            txtMensaje.TabIndex = 1;
-            // 
-            // btnEnviar
-            // 
-            btnEnviar.Location = new Point(363, 288);
-            btnEnviar.Name = "btnEnviar";
-            btnEnviar.Size = new Size(222, 45);
-            btnEnviar.TabIndex = 2;
-            btnEnviar.Text = "Enviar Mensaje";
-            btnEnviar.UseVisualStyleBackColor = true;
-            btnEnviar.Click += btnEnviar_Click;
-            // 
-            // MessageForm
-            // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
-            Controls.Add(btnEnviar);
-            Controls.Add(txtMensaje);
+            txtMensaje.Height = 60;
+            txtMensaje.Dock = DockStyle.Fill;
+            txtMensaje.Margin = new Padding(10);
+
+            // Botón enviar
+            FormStyles.ApplyMainButtonStyle(btnEnviar);
+            btnEnviar.Text = "Enviar";
+            btnEnviar.Width = 120;
+            btnEnviar.Dock = DockStyle.Right;
+            btnEnviar.Margin = new Padding(10);
+
+            // Label estado
+            FormStyles.ApplyLabelStyle(lblEstado);
+            lblEstado.Dock = DockStyle.Bottom;
+            lblEstado.TextAlign = ContentAlignment.MiddleCenter;
+            lblEstado.Height = 30;
+            lblEstado.BackColor = FormStyles.WhiteColor;
+            lblEstado.Padding = new Padding(5);
+
+            // Organización de controles
+            panelInferior.Controls.Add(btnEnviar);
+            panelInferior.Controls.Add(txtMensaje);
+
+            Controls.Add(panelMensajes);
+            Controls.Add(panelInferior);
             Controls.Add(lblReceptor);
-            Name = "MessageForm";
-            Text = "MessageForm";
+            Controls.Add(lblEstado);
+
             ResumeLayout(false);
             PerformLayout();
         }
@@ -77,7 +114,11 @@
         #endregion
 
         private Label lblReceptor;
+        private Label lblEstado;
         private TextBox txtMensaje;
+        private TextBox txtMensajes;
         private Button btnEnviar;
+        private Panel panelMensajes;
+        private Panel panelInferior;
     }
 }

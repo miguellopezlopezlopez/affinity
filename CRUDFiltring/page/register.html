@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Google Sign-In (Comentado hasta su implementación) -->
-    <!-- <meta name="google-signin-client_id" content="TU_CLIENT_ID.apps.googleusercontent.com"> -->
+    <meta name="google-signin-client_id" content="TU_CLIENT_ID.apps.googleusercontent.com"> 
     <title>Affinity - Encuentra conexiones reales</title>
     <link rel="stylesheet" href="css/register.css">
     <!-- Google Sign-In Script (Comentado hasta su implementación) -->
     <!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
+    <!-- Google Maps Script (Comentado temporalmente) -->
+    <!-- <script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places"></script> -->
 </head>
 <body>
     <div class="background-shapes">
@@ -142,9 +144,18 @@
                     <label class="photo-label">Foto de perfil</label>
                     <div class="photo-preview-container" onclick="document.getElementById('profilePhoto').click()">
                         <img id="photoPreview" src="#" alt="Vista previa">
+                        <div class="photo-placeholder">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                            <p>Haz clic para seleccionar una foto</p>
+                        </div>
+                        <button type="button" class="remove-photo" id="removePhoto" style="display: none;">&times;</button>
                     </div>
-                    <input type="file" id="profilePhoto" accept="image/*" style="display: none;">
+                    <input type="file" id="profilePhoto" accept="image/jpeg,image/png,image/gif" style="display: none;">
                     <button type="button" class="upload-btn" onclick="document.getElementById('profilePhoto').click()">Seleccionar foto</button>
+                    <span class="photo-error" style="display: none; color: #ff3b30; font-size: 0.8rem; margin-top: 5px;"></span>
                 </div>
 
                 <p style="margin-bottom: 10px; font-size: 0.9rem; color: #777;">¿Cuál es tu género?</p>
@@ -167,11 +178,17 @@
                     <input type="checkbox" id="termsCheck" required>
                     <label for="termsCheck">Al registrarme, acepto los <a href="#">Términos y Condiciones</a> y la <a href="#">Política de Privacidad</a> de Affinity</label>
                 </div>
+
+                <div class="form-group">
+                    <input type="text" id="location" required placeholder=" ">
+                    <label for="location">Ubicación</label>
+                    <span class="error-text" data-error="location"></span>
+                </div>
                 
                 <button type="button" class="register-button" onclick="simulateRegister()">Crear cuenta</button>
                 
                 <!-- Registro con Google (Comentado hasta su implementación) -->
-                <!--
+                
                 <div class="social-register">
                     <p>O regístrate con</p>
                     <div id="g_id_onload"
@@ -187,7 +204,7 @@
                          data-logo_alignment="left">
                     </div>
                 </div>
-                -->
+                
                 
                 <div class="login-link">
                     <p>¿Ya tienes una cuenta? <a href="login.html">Iniciar sesión</a></p>

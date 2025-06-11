@@ -38,6 +38,7 @@
 
         private void InitializeComponent()
         {
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             label1 = new Label();
             dataGridViewUsuario = new DataGridView();
             btnActualizar = new Button();
@@ -74,44 +75,73 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(325, 23);
+            label1.Font = new Font("Segoe UI", 16F, FontStyle.Bold, GraphicsUnit.Point);
+            label1.ForeColor = Color.FromArgb(51, 51, 51);
+            label1.Location = new Point(325, 35);
             label1.Name = "label1";
-            label1.Size = new Size(111, 15);
+            label1.Size = new Size(219, 30);
             label1.TabIndex = 0;
             label1.Text = "Gestión de Usuarios";
             // 
             // dataGridViewUsuario
             // 
             dataGridViewUsuario.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewUsuario.BackgroundColor = Color.White;
+            dataGridViewUsuario.BorderStyle = BorderStyle.None;
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = Color.FromArgb(51, 122, 183);
+            dataGridViewCellStyle1.Font = new Font("Segoe UI", 10F, FontStyle.Bold, GraphicsUnit.Point);
+            dataGridViewCellStyle1.ForeColor = Color.White;
+            dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
+            dataGridViewUsuario.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             dataGridViewUsuario.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewUsuario.Location = new Point(110, 69);
+            dataGridViewUsuario.GridColor = Color.FromArgb(230, 230, 230);
+            dataGridViewUsuario.Location = new Point(110, 80);
             dataGridViewUsuario.Name = "dataGridViewUsuario";
+            dataGridViewUsuario.RowHeadersVisible = false;
             dataGridViewUsuario.Size = new Size(620, 150);
             dataGridViewUsuario.TabIndex = 1;
             // 
             // btnActualizar
             // 
+            btnActualizar.BackColor = Color.FromArgb(51, 122, 183);
+            btnActualizar.Cursor = Cursors.Hand;
+            btnActualizar.FlatStyle = FlatStyle.Flat;
+            btnActualizar.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnActualizar.ForeColor = Color.White;
             btnActualizar.Location = new Point(400, 332);
             btnActualizar.Name = "btnActualizar";
             btnActualizar.Size = new Size(147, 46);
             btnActualizar.TabIndex = 2;
             btnActualizar.Text = "Actualizar Usuario";
+            btnActualizar.UseVisualStyleBackColor = false;
             btnActualizar.Click += btnActualizar_Click;
             // 
             // btnCargarFoto
             // 
+            btnCargarFoto.BackColor = Color.FromArgb(51, 122, 183);
+            btnCargarFoto.Cursor = Cursors.Hand;
+            btnCargarFoto.FlatStyle = FlatStyle.Flat;
+            btnCargarFoto.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnCargarFoto.ForeColor = Color.White;
             btnCargarFoto.Location = new Point(623, 358);
             btnCargarFoto.Name = "btnCargarFoto";
             btnCargarFoto.Size = new Size(89, 43);
             btnCargarFoto.TabIndex = 17;
-            btnCargarFoto.Text = "Seleccione su foto de perfil";
+            btnCargarFoto.Text = "Seleccionar foto";
+            btnCargarFoto.UseVisualStyleBackColor = false;
             btnCargarFoto.Click += btnCargarFoto_Click;
             // 
             // pictureBoxFoto
             // 
+            pictureBoxFoto.BackColor = Color.WhiteSmoke;
+            pictureBoxFoto.BorderStyle = BorderStyle.FixedSingle;
             pictureBoxFoto.Location = new Point(596, 230);
             pictureBoxFoto.Name = "pictureBoxFoto";
             pictureBoxFoto.Size = new Size(135, 122);
+            pictureBoxFoto.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBoxFoto.TabIndex = 16;
             pictureBoxFoto.TabStop = false;
             // 
@@ -155,7 +185,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(110, 233);
+            label2.Location = new Point(100, 233);
             label2.Name = "label2";
             label2.Size = new Size(50, 15);
             label2.TabIndex = 18;
@@ -164,7 +194,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(110, 263);
+            label3.Location = new Point(100, 263);
             label3.Name = "label3";
             label3.Size = new Size(54, 15);
             label3.TabIndex = 19;
@@ -173,7 +203,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(110, 293);
+            label4.Location = new Point(100, 293);
             label4.Name = "label4";
             label4.Size = new Size(54, 15);
             label4.TabIndex = 20;
@@ -182,7 +212,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(110, 323);
+            label5.Location = new Point(100, 323);
             label5.Name = "label5";
             label5.Size = new Size(63, 15);
             label5.TabIndex = 21;
@@ -191,7 +221,7 @@
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new Point(110, 383);
+            label6.Location = new Point(100, 383);
             label6.Name = "label6";
             label6.Size = new Size(48, 15);
             label6.TabIndex = 22;
@@ -208,7 +238,7 @@
             // lblPassword
             // 
             lblPassword.AutoSize = true;
-            lblPassword.Location = new Point(110, 353);
+            lblPassword.Location = new Point(100, 353);
             lblPassword.Name = "lblPassword";
             lblPassword.Size = new Size(70, 15);
             lblPassword.TabIndex = 24;
@@ -277,6 +307,7 @@
             // verEstadisticasToolStripMenuItem
             // 
             verEstadisticasToolStripMenuItem.Name = "verEstadisticasToolStripMenuItem";
+            verEstadisticasToolStripMenuItem.Size = new Size(209, 22);
             verEstadisticasToolStripMenuItem.Text = "Ver Estadísticas";
             verEstadisticasToolStripMenuItem.Click += verEstadisticasToolStripMenuItem_Click;
             // 
@@ -298,6 +329,7 @@
             // 
             // MainForm
             // 
+            BackColor = Color.White;
             ClientSize = new Size(800, 450);
             Controls.Add(btnEliminarUsuario);
             Controls.Add(cmbGenero);
@@ -319,9 +351,10 @@
             Controls.Add(btnActualizar);
             Controls.Add(btnCargarFoto);
             Controls.Add(pictureBoxFoto);
+            Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             MainMenuStrip = menuStrip1;
             Name = "MainForm";
-            Text = "MainForm";
+            Text = "Affinity - Panel Principal";
             Load += MainForm_Load;
             ((System.ComponentModel.ISupportInitialize)dataGridViewUsuario).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBoxFoto).EndInit();
@@ -329,7 +362,6 @@
             menuStrip1.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
-
         }
         private ToolStripMenuItem abrirMatchesToolStripMenuItem;
         private ToolStripMenuItem abrirMensajesRecibidosToolStripMenuItem;
