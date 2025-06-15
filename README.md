@@ -88,4 +88,4 @@ Affinty es una plataforma integral de emparejamiento y mensajería construida co
 5. Crear un Pull Request
 
 ## Licencia
-Este proyecto es propietario y confidencial. Todos los derechos reservados.
+Este proyecto esta bajo la licencia MIT
