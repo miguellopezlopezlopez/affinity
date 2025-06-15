@@ -56,6 +56,12 @@ namespace FiltringApp
                 DataTable dt = new DataTable();
                 adaptador.Fill(dt);
                 dataGridViewUsuarios.DataSource = dt;
+                
+                // Ocultar la columna ID
+                if (dataGridViewUsuarios.Columns.Contains("ID"))
+                {
+                    dataGridViewUsuarios.Columns["ID"].Visible = false;
+                }
             }
             catch (Exception ex)
             {

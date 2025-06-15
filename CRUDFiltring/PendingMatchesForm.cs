@@ -112,8 +112,7 @@ namespace FiltringApp
                 // Configurar las columnas del DataGridView
                 if (dataGridViewSolicitudes.Columns.Count > 0)
                 {
-                    dataGridViewSolicitudes.Columns["ID_Match"].HeaderText = "ID";
-                    dataGridViewSolicitudes.Columns["ID_Match"].Width = 50;
+                    dataGridViewSolicitudes.Columns["ID_Match"].Visible = false;
                     
                     dataGridViewSolicitudes.Columns["Usuario"].HeaderText = "Usuario";
                     dataGridViewSolicitudes.Columns["Usuario"].Width = 150;

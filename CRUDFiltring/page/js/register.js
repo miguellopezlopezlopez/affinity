@@ -127,6 +127,92 @@ document.addEventListener('DOMContentLoaded', function() {
         // Inicializar estado de la imagen
         resetPhoto();
     }
+
+    const form = document.querySelector('.register-form');
+    const errorMessage = document.querySelector('.form-error-message');
+    const successMessage = document.querySelector('.form-success-message');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Reset messages
+        errorMessage.style.display = 'none';
+        successMessage.style.display = 'none';
+
+        // Validar contraseñas
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        if (password !== confirmPassword) {
+            errorMessage.textContent = 'Las contraseñas no coinciden';
+            errorMessage.style.display = 'block';
+            return;
+        }
+
+        // Obtener género seleccionado
+        const genderInputs = document.getElementsByName('gender');
+        let gender = '';
+        for (const input of genderInputs) {
+            if (input.checked) {
+                gender = input.value;
+                break;
+            }
+        }
+
+        if (!gender) {
+            errorMessage.textContent = 'Por favor selecciona un género';
+            errorMessage.style.display = 'block';
+            return;
+        }
+
+        // Verificar términos y condiciones
+        if (!document.getElementById('termsCheck').checked) {
+            errorMessage.textContent = 'Debes aceptar los términos y condiciones';
+            errorMessage.style.display = 'block';
+            return;
+        }
+
+        // Crear objeto con datos del formulario
+        const formData = {
+            user: document.getElementById('username').value,
+            email: document.getElementById('email').value,
+            password: password,
+            nombre: document.getElementById('firstName').value,
+            apellido: document.getElementById('lastName').value,
+            genero: gender,
+            foto: photoPreview.src !== '#' ? photoPreview.src : '',
+            ubicacion: document.getElementById('location').value
+        };
+
+        try {
+            const response = await fetch('api/register.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                successMessage.textContent = data.message;
+                successMessage.style.display = 'block';
+                
+                // Redirigir al login después de un breve delay
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            } else {
+                errorMessage.textContent = data.message;
+                errorMessage.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            errorMessage.textContent = 'Error al conectar con el servidor';
+            errorMessage.style.display = 'block';
+        }
+    });
 });
 
 // Validar que las contraseñas coincidan

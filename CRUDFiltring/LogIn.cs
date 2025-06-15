@@ -65,15 +65,23 @@ namespace FiltringApp
             {
                 try
                 {
-                    string script = File.ReadAllText(scriptPath);
-
-                    // Conectarse sin especificar la base de datos para asegurarnos de que se pueda crear
+                    // Conectarse sin especificar la base de datos para verificar si existe
                     string cadenaConexionInicial = $"server={config["host"]};port={config["port"]};user={config["user"]};password={config["password"]};";
                     using (MySqlConnection conn = new MySqlConnection(cadenaConexionInicial))
                     {
                         conn.Open();
-                        MySqlCommand cmd = new MySqlCommand(script, conn);
-                        cmd.ExecuteNonQuery();
+                        
+                        // Verificar si la base de datos existe
+                        MySqlCommand checkDbCmd = new MySqlCommand($"SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{config["database"]}'", conn);
+                        object result = checkDbCmd.ExecuteScalar();
+                        
+                        if (result == null)
+                        {
+                            // La base de datos no existe, ejecutar el script
+                            string script = File.ReadAllText(scriptPath);
+                            MySqlCommand cmd = new MySqlCommand(script, conn);
+                            cmd.ExecuteNonQuery();
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -83,7 +91,7 @@ namespace FiltringApp
             }
             else
             {
-                MessageBox.Show("El archivo filtringDB.sql no se encontr. Asegrate de que el script est en la carpeta del ejecutable.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("El archivo filtringDB.sql no se encontró. Asegúrate de que el script esté en la carpeta del ejecutable.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -116,7 +124,7 @@ namespace FiltringApp
                 }
 
                 string hashedPassword = HashPassword(contrasea);
-                string consulta = "SELECT ID, User FROM Usuario WHERE User = @usuario AND Password = @contrasea";
+                string consulta = "SELECT ID, User FROM Usuario WHERE (User = @usuario OR Email = @usuario) AND Password = @contrasea";
                 MySqlCommand cmd = new MySqlCommand(consulta, conexion);
                 cmd.Parameters.AddWithValue("@usuario", usuario);
                 cmd.Parameters.AddWithValue("@contrasea", hashedPassword);

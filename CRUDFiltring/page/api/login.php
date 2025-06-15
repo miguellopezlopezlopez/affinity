@@ -1,158 +1,144 @@
 <?php
 // Habilitar TODOS los errores para debugging
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 
-session_start();
+// Headers CORS y HTTP necesarios
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Accept');
+header('Content-Type: application/json; charset=utf-8');
 
-// Log de debugging
-error_log("=== LOGIN.PHP INICIADO ===");
-error_log("Método: " . $_SERVER['REQUEST_METHOD']);
-error_log("Headers recibidos: " . print_r(getallheaders(), true));
+// Log de inicio de solicitud
+error_log("Iniciando solicitud de login");
 
-// Headers CORS más permisivos para desarrollo
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: http://localhost');
-header('Access-Control-Allow-Methods: POST, OPTIONS, GET');
-header('Access-Control-Allow-Headers: Content-Type, Accept, Authorization');
-header('Access-Control-Allow-Credentials: true');
-
-// Manejar preflight OPTIONS request
+// Manejar preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    error_log("Preflight OPTIONS request manejado");
     http_response_code(200);
     exit();
 }
 
-// Verificar que sea POST
+// Verificar método POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     error_log("Método no permitido: " . $_SERVER['REQUEST_METHOD']);
+    http_response_code(405);
     echo json_encode([
         'success' => false,
         'message' => 'Método no permitido'
     ]);
-    exit;
+    exit();
 }
-
-// Obtener los datos del POST
-$input = file_get_contents('php://input');
-error_log("Raw input: " . $input);
-
-$data = json_decode($input, true);
-error_log("Datos decodificados: " . print_r($data, true));
-
-if (!$data || !isset($data['email']) || !isset($data['password'])) {
-    error_log("Datos faltantes - data: " . print_r($data, true));
-    echo json_encode([
-        'success' => false,
-        'message' => 'Por favor, proporciona usuario/email y contraseña',
-        'debug' => [
-            'received_data' => $data,
-            'raw_input' => $input
-        ]
-    ]);
-    exit;
-}
-
-$emailOrUser = trim($data['email']);
-$password = $data['password'];
-
-if (empty($emailOrUser) || empty($password)) {
-    error_log("Campos vacíos - email: '$emailOrUser', password: " . (empty($password) ? 'empty' : 'not empty'));
-    echo json_encode([
-        'success' => false,
-        'message' => 'Usuario/Email y contraseña son requeridos'
-    ]);
-    exit;
-}
-
-// Conexión a la base de datos
-$host = 'localhost';
-$db   = 'filtring';
-$user = 'root';
-$pass = '';
-$charset = 'utf8mb4';
-
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-];
 
 try {
-    error_log("Intentando conectar a la base de datos...");
-    $pdo = new PDO($dsn, $user, $pass, $options);
-    error_log("Conexión a BD exitosa");
-
-    // Buscar usuario por email o nombre de usuario y contraseña
-    $stmt = $pdo->prepare('SELECT ID, User, Email, Nombre, Apellido FROM Usuario WHERE (Email = ? OR User = ?) AND Password = ?');
-    error_log("Query preparada: SELECT ID, User, Email, Nombre, Apellido FROM Usuario WHERE (Email = ? OR User = ?) AND Password = ?");
-    error_log("Parámetros: email/user = '$emailOrUser', password = '[OCULTO]'");
+    require_once 'config.php';
     
-    $stmt->execute([$emailOrUser, $emailOrUser, $password]);
-    $user = $stmt->fetch();
+    // Obtener y loguear los datos del POST
+    $input = file_get_contents('php://input');
+    error_log("Datos recibidos: " . $input);
     
-    error_log("Resultado de la consulta: " . print_r($user, true));
+    $data = json_decode($input, true);
 
-    if ($user) {
-        // Guardar datos en la sesión
-        $_SESSION['user_id'] = $user['ID'];
-        $_SESSION['username'] = $user['User'];
-        $_SESSION['email'] = $user['Email'];
-        $_SESSION['nombre_completo'] = $user['Nombre'] . ' ' . $user['Apellido'];
+    if (!$data || !isset($data['user']) || !isset($data['password'])) {
+        error_log("Datos inválidos recibidos");
+        throw new Exception('Por favor, proporciona usuario/email y contraseña');
+    }
 
-        error_log("Sesión creada exitosamente para usuario ID: " . $user['ID']);
-        error_log("Datos de sesión: " . print_r($_SESSION, true));
+    $user = trim($data['user']);
+    $password = trim($data['password']);
 
-        $response = [
-            'success' => true,
-            'message' => '¡Inicio de sesión exitoso!',
-            'user' => [
-                'id' => $user['ID'],
-                'username' => $user['User'],
-                'email' => $user['Email'],
-                'nombre_completo' => $user['Nombre'] . ' ' . $user['Apellido']
-            ],
-            'redirect' => 'profile.html?userId=' . $user['ID'],
-            'session_id' => session_id()
-        ];
+    error_log("Procesando login para usuario: " . $user);
+
+    if (empty($user) || empty($password)) {
+        throw new Exception('Usuario/Email y contraseña son requeridos');
+    }
+
+    // Verificar si es email o nombre de usuario
+    $isEmail = filter_var($user, FILTER_VALIDATE_EMAIL);
+    
+    // Preparar la consulta usando prepared statements
+    $sql = "SELECT ID, User, Email, Nombre, Apellido, Genero, Ubicacion, Foto 
+            FROM usuario 
+            WHERE " . ($isEmail ? "Email = ?" : "User = ?") . 
+            " AND Password = (SELECT hash_password(?))";
+
+    error_log("SQL Query: " . $sql);
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        error_log("Error en prepare: " . $conn->error);
+        throw new Exception('Error preparando la consulta: ' . $conn->error);
+    }
+
+    // Bind parameters
+    $stmt->bind_param("ss", $user, $password);
+    
+    // Ejecutar la consulta
+    if (!$stmt->execute()) {
+        error_log("Error en execute: " . $stmt->error);
+        throw new Exception('Error ejecutando la consulta: ' . $stmt->error);
+    }
+
+    $result = $stmt->get_result();
+    error_log("Número de resultados: " . $result->num_rows);
+
+    if ($result->num_rows === 1) {
+        $user_data = $result->fetch_assoc();
+        error_log("Datos del usuario encontrado: " . json_encode($user_data));
         
-        error_log("Respuesta exitosa: " . json_encode($response));
+        // Construir URL completa para la foto si existe
+        if (!empty($user_data['Foto']) && strpos($user_data['Foto'], 'http') !== 0) {
+            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'];
+            $user_data['Foto'] = "$protocol://$host/page/" . $user_data['Foto'];
+        }
+
+        // Iniciar sesión y guardar datos
+        session_start();
+        $_SESSION['user_id'] = $user_data['ID'];
+        $_SESSION['user'] = $user_data['User'];
+        
+        // Preparar respuesta
+        $response = [
+            'success' => true, 
+            'message' => 'Login exitoso',
+            'user' => [
+                'id' => intval($user_data['ID']),
+                'username' => $user_data['User'],
+                'email' => $user_data['Email'],
+                'nombre' => $user_data['Nombre'],
+                'apellido' => $user_data['Apellido'],
+                'genero' => $user_data['Genero'],
+                'ubicacion' => $user_data['Ubicacion'],
+                'foto' => $user_data['Foto']
+            ]
+        ];
+
+        // Log de la respuesta
+        error_log("Enviando respuesta exitosa: " . json_encode($response));
         echo json_encode($response);
+
     } else {
-        error_log("Usuario no encontrado o contraseña incorrecta");
+        error_log("No se encontró el usuario: " . $user);
+        http_response_code(401);
         echo json_encode([
-            'success' => false,
-            'message' => 'Usuario/Email o contraseña incorrectos'
+            'success' => false, 
+            'message' => 'Usuario o contraseña incorrectos'
         ]);
     }
-} catch (PDOException $e) {
-    // Log del error para debugging
-    error_log("Error de base de datos: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
 
-    echo json_encode([
-        'success' => false,
-        'message' => 'Error de conexión a la base de datos',
-        'debug' => [
-            'error' => $e->getMessage(),
-            'dsn' => $dsn
-        ]
-    ]);
 } catch (Exception $e) {
-    // Log de errores generales
-    error_log("Error general: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
-
+    error_log("Error en login.php: " . $e->getMessage());
+    http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => 'Error interno del servidor',
-        'debug' => [
-            'error' => $e->getMessage()
-        ]
+        'message' => $e->getMessage()
     ]);
+} finally {
+    if (isset($stmt)) {
+        $stmt->close();
+    }
+    if (isset($conn)) {
+        $conn->close();
+    }
 }
-
-error_log("=== LOGIN.PHP TERMINADO ===");
-?>
+?> 

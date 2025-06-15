@@ -272,9 +272,70 @@ document.addEventListener('DOMContentLoaded', function() {
     if (loginForm) {
         console.log('Formulario de login encontrado');
         
-        loginForm.addEventListener('submit', function(e) {
+        loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            handleLogin(e);
+            
+            // Reset messages
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            
+            const user = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            // Validación básica
+            if (!user || !password) {
+                errorMessage.textContent = 'Por favor, completa todos los campos';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            const loginButton = document.querySelector('.register-button');
+            const originalText = loginButton.textContent;
+            
+            try {
+                loginButton.textContent = 'Conectando...';
+                loginButton.disabled = true;
+
+                const response = await fetch('api/login.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user: user,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    successMessage.textContent = '¡Inicio de sesión exitoso! Redirigiendo...';
+                    successMessage.style.display = 'block';
+                    
+                    // Guardar datos del usuario
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // Redirigir al perfil
+                    setTimeout(() => {
+                        window.location.href = 'profile.html';
+                    }, 1000);
+                } else {
+                    errorMessage.textContent = data.message || 'Usuario o contraseña incorrectos';
+                    errorMessage.style.display = 'block';
+                    loginForm.classList.add('shake');
+                    setTimeout(() => loginForm.classList.remove('shake'), 500);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.textContent = 'Error al conectar con el servidor';
+                errorMessage.style.display = 'block';
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = originalText;
+            }
         });
         
         // Manejar Enter en los campos

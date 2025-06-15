@@ -106,7 +106,7 @@
             label3.Name = "label3";
             label3.Size = new Size(59, 19);
             label3.TabIndex = 6;
-            label3.Text = "Usuario:";
+            label3.Text = "Usuario/Email:";
             // 
             // label4
             // 

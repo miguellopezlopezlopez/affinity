@@ -82,6 +82,16 @@ namespace FiltringApp
                 adaptador.Fill(dt);
                 dataGridViewUsuario.DataSource = dt;
 
+                // Ocultar las columnas ID y Foto
+                if (dataGridViewUsuario.Columns.Contains("ID"))
+                {
+                    dataGridViewUsuario.Columns["ID"].Visible = false;
+                }
+                if (dataGridViewUsuario.Columns.Contains("Foto"))
+                {
+                    dataGridViewUsuario.Columns["Foto"].Visible = false;
+                }
+
                 if (dt.Rows.Count > 0)
                 {
                     DataRow row = dt.Rows[0];
