@@ -465,10 +465,26 @@ namespace FiltringApp
                     conexion.Open();
                 }
 
+                // Primero verificar la contraseña actual
+                string hashedPassword = HashPassword(txtPassword.Text);
+                string verificarContrasena = "SELECT COUNT(*) FROM Usuario WHERE User = @usuario AND Password = @password";
+                using (MySqlCommand cmdVerificar = new MySqlCommand(verificarContrasena, conexion))
+                {
+                    cmdVerificar.Parameters.AddWithValue("@usuario", usuarioAutenticado);
+                    cmdVerificar.Parameters.AddWithValue("@password", hashedPassword);
+                    int count = Convert.ToInt32(cmdVerificar.ExecuteScalar());
+
+                    if (count == 0)
+                    {
+                        MessageBox.Show("La contraseña ingresada no es correcta.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+
                 string consulta = "UPDATE Usuario SET Password=@password, Nombre=@nombre, Apellido=@apellido, Genero=@genero, Ubicacion=@ubicacion, Foto=@foto WHERE User=@usuario";
                 MySqlCommand cmd = new MySqlCommand(consulta, conexion);
                 cmd.Parameters.AddWithValue("@usuario", usuarioAutenticado);
-                cmd.Parameters.AddWithValue("@password", txtPassword.Text);
+                cmd.Parameters.AddWithValue("@password", hashedPassword);
                 cmd.Parameters.AddWithValue("@nombre", txtNombre.Text);
                 cmd.Parameters.AddWithValue("@apellido", txtApellido.Text);
                 cmd.Parameters.AddWithValue("@genero", cmbGenero.SelectedItem.ToString());
@@ -490,6 +506,16 @@ namespace FiltringApp
                 {
                     conexion.Close();
                 }
+            }
+        }
+
+        private string HashPassword(string password)
+        {
+            using (System.Security.Cryptography.SHA256 sha256 = System.Security.Cryptography.SHA256.Create())
+            {
+                byte[] bytes = System.Text.Encoding.UTF8.GetBytes(password);
+                byte[] hash = sha256.ComputeHash(bytes);
+                return BitConverter.ToString(hash).Replace("-", "").ToLower();
             }
         }
 
