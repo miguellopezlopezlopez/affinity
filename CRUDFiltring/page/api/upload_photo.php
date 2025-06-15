@@ -112,6 +112,13 @@ try {
             $stmt->bind_param("si", $webPath, $userId);
             $stmt->execute();
             error_log("Foto principal actualizada en la BD");
+
+            // Actualizar foto en la tabla Usuario
+            $queryUsuario = "UPDATE Usuario SET Foto = ? WHERE ID = ?";
+            $stmtUsuario = $conn->prepare($queryUsuario);
+            $stmtUsuario->bind_param("si", $webPath, $userId);
+            $stmtUsuario->execute();
+            error_log("Foto actualizada en la tabla Usuario");
         }
 
         // Siempre guardar en la tabla FotosPerfil
