@@ -1,7 +1,7 @@
-# Filtring App
+# Affinty
 
 ## Descripción
-Filtring App es una plataforma integral de emparejamiento y mensajería construida con C# Windows Forms y backend en PHP. La aplicación permite a los usuarios conectarse, emparejarse y comunicarse con otros usuarios según sus preferencias y perfiles.
+Affinty es una plataforma integral de emparejamiento y mensajería construida con C# Windows Forms y backend en PHP. La aplicación permite a los usuarios conectarse, emparejarse y comunicarse con otros usuarios según sus preferencias y perfiles.
 
 ## Tecnologías Utilizadas
 - **Frontend Escritorio**: C# Windows Forms (.NET)
@@ -44,11 +44,11 @@ Filtring App es una plataforma integral de emparejamiento y mensajería construi
 │   │   ├── MainForm.cs       # Ventana principal de la aplicación
 │   │   ├── MatchesForm.cs    # Gestión de emparejamientos
 │   │   ├── MessageForm.cs    # Interfaz de mensajería
-│   │   └── UsersForm.cs      # Gestión de usuarios
-│   │
-│   └── Utilities/
-│       ├── ChatConnection.cs  # Funcionalidad de chat
-│       └── FormStyles.cs     # Utilidades de estilo de UI
+│   │   ├── UsersForm.cs      # Gestión de usuarios
+│   │   ├── ChatConnection.cs  # Funcionalidad de chat
+│   │   └── FormStyles.cs     # Utilidades de estilo de UI
+│  
+│      
 ```
 
 ## Instrucciones de Configuración
