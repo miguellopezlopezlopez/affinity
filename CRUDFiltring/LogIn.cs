@@ -149,7 +149,17 @@ namespace FiltringApp
                             }
                         }
 
-                        Form formularioDestino = new MainForm(usuarioAutenticado);
+                        // Determinar si es el usuario administrador (ID = 1 o username = 'admin')
+                        Form formularioDestino;
+                        if (userId == 1 || usuarioAutenticado.ToLower() == "admin")
+                        {
+                            formularioDestino = new AdminForm(usuarioAutenticado, userId);
+                        }
+                        else
+                        {
+                            formularioDestino = new MainForm(usuarioAutenticado);
+                        }
+
                         this.Hide();
                         formularioDestino.ShowDialog();
                         this.Close();
@@ -160,7 +170,16 @@ namespace FiltringApp
                             "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         
                         // Continuar con la aplicación de escritorio aunque falle la web
-                        Form formularioDestino = new MainForm(usuarioAutenticado);
+                        Form formularioDestino;
+                        if (userId == 1 || usuarioAutenticado.ToLower() == "admin")
+                        {
+                            formularioDestino = new AdminForm(usuarioAutenticado, userId);
+                        }
+                        else
+                        {
+                            formularioDestino = new MainForm(usuarioAutenticado);
+                        }
+
                         this.Hide();
                         formularioDestino.ShowDialog();
                         this.Close();
