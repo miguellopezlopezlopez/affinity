@@ -58,6 +58,8 @@
             label2.Size = new Size(81, 30);
             label2.TabIndex = 1;
             label2.Text = "Affinity";
+            label2.Cursor = Cursors.Hand;
+            label2.Click += new EventHandler(label2_Click);
             // 
             // txtUser
             // 

@@ -92,6 +92,8 @@ body {
     font-weight: 800;
     margin-bottom: 20px;
     letter-spacing: 1px;
+    text-decoration: none;
+    color: inherit;
 }
 
 .logo span {
@@ -835,4 +837,47 @@ body {
 
 #location:focus {
     background-color: white;
+}
+
+[data-error] {
+    color: #ff0000;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+.error-text {
+    display: none;
+}
+
+.has-error .error-text {
+    display: block;
+    color: #ff0000;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+.form-error-message {
+    display: none;
+}
+
+.form-error-message.show {
+    display: block;
+    color: #ff0000;
+    background-color: #ffe0e0;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.photo-error {
+    display: none;
+}
+
+.photo-error.show {
+    display: block;
+    color: #ff0000;
+    font-size: 0.8rem;
+    margin-top: 5px;
 } 

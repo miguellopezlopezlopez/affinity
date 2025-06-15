@@ -110,6 +110,8 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: 1px;
+    text-decoration: none;
+    color: inherit;
 }
 
 .logo span {
@@ -431,7 +433,11 @@ body {
 .footer-logo {
     font-size: 2rem;
     font-weight: 800;
-    margin-bottom: 20px;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-decoration: none;
+    color: inherit;
 }
 
 .footer-links {

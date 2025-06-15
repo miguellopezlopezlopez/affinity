@@ -196,13 +196,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (data.success) {
-                successMessage.textContent = data.message;
-                successMessage.style.display = 'block';
-                
-                // Redirigir al login después de un breve delay
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
+                // Redirigir al login inmediatamente
+                window.location.href = 'login.html';
             } else {
                 errorMessage.textContent = data.message;
                 errorMessage.style.display = 'block';
@@ -393,10 +388,8 @@ async function simulateRegister() {
             }
         }
 
-        showSuccessMessage('¡Registro exitoso! Redirigiendo al inicio de sesión...');
-        setTimeout(() => {
-            window.location.href = 'login.html';
-        }, 2000);
+        // Redirigir al login inmediatamente
+        window.location.href = 'login.html';
 
     } catch (error) {
         console.error('Error:', error);
